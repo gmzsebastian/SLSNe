@@ -41,9 +41,5 @@ jobs:
                 python -m pip install flake8 pytest tox
                 if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     
-            - name: Run tests
-              run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
-          
-            - name: Run tests with pytest
-              run: |
-                  pytest tests/
+            - name: Run tests with tox
+              run: tox -e test
