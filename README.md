@@ -6,7 +6,10 @@ Package designed to work with the data of Type I Superluminous Supernovae (SLSNe
 * Docs: [https://astroplan.readthedocs.io/](https://slsne.readthedocs.io/)
 * License: MIT
 
-![Documentation Status](https://readthedocs.org/projects/slsne/badge/?version=latest)
+![Tests](https://github.com/gmzsebastian/SLSNe/actions/workflows/ci_tests.yml/badge.svg)
+![License](http://img.shields.io/badge/license-MIT-blue.svg)
+[![Coverage Status](https://coveralls.io/repos/github/gmzsebastian/SLSNe/badge.svg?branch=main)](https://coveralls.io/github/gmzsebastian/SLSNe?branch=main)
+[![Documentation Status](https://readthedocs.org/projects/slsne/badge/?version=latest)](https://slsne.readthedocs.io/en/latest/?badge=latest)
 
 ## Attribution
 
