@@ -2,8 +2,8 @@
 
 Package designed to work with the data of Type I Superluminous Supernovae (SLSNe).
 
-* Code: [https://github.com/astropy/astroplan](https://github.com/gmzsebastian/SLSNe)
-* Docs: [https://astroplan.readthedocs.io/](https://slsne.readthedocs.io/)
+* Code: [https://github.com/gmzsebastian/SLSNe](https://github.com/gmzsebastian/SLSNe)
+* Docs: [https://slsne.readthedocs.io/](https://slsne.readthedocs.io/)
 * License: MIT
 
 ![Tests](https://github.com/gmzsebastian/SLSNe/actions/workflows/ci_tests.yml/badge.svg)
