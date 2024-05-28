@@ -19,3 +19,32 @@ in ``generic_reference.txt``. The function that does this operation is ``slsne.u
 
     from slsne.utils import define_filters
     filters = define_filters()  
+
+One the big table of filters ``filters`` is created, it can be used to access the central wavelength and zeropoint
+using the other built in functions.
+
+.. code-block:: python
+
+    from slsne.utils import get_cenwave, quick_cenwave_zeropoint, check_filters
+    from astropy.table import Table
+
+    # Create a mock photometry table
+    names = ['Telescope', 'Instrument', 'System', 'Filter']
+    data = [['Swift', 'P48', 'Generic'],
+            ['UVOT', 'ZTF', 'Generic'],
+            ['Vega', 'AB', 'AB'],
+            ['UVW1', 'g', 'r']]
+    phot = Table(data, names=names)
+
+    # get_cenwave returns the central wavelength,
+    # and optionally the zeropoint of a given filter
+    cenwave, zeropoint = get_cenwave('g', return_zp=True, verbose=True)
+
+    # quick_cenwave_zeropoint returns the central wavelength
+    # and zeropoint of a table of photometry that has already
+    # been processed and verified to be clean.
+    cenwaves, zeropoints = quick_cenwave_zeropoint(phot)
+
+    # If the previous function failed, you can check which filter
+    # in `phot`caused the problem by running check_filters
+    check_filters(phot)

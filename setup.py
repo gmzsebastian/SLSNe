@@ -11,7 +11,7 @@ setup(
     python_requires='>=3.6',
     packages=['slsne'],
     include_package_data=True,
-    package_data={'slsne': ['ref_data/*.txt']},
+    package_data={'slsne': ['ref_data/*', 'ref_data/supernovae/*/*.txt']},
     install_requires=[
         'numpy',
         'matplotlib',
