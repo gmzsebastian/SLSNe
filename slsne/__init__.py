@@ -1,0 +1,6 @@
+__version__ = "0.1.0"
+__uri__ = "https://slsne.readthedocs.io"
+__author__ = "Sebastian Gomez"
+__email__ = "sgomez@stsci.edu"
+__license__ = "MIT"
+__description__ = "Catalog of Superluminous Supernovae"

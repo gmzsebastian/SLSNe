@@ -1,4 +1,23 @@
+# Required
 version: 2
 
+# Build documentation in the docs/ directory with Sphinx
 sphinx:
-  configuration: docs/conf.py
+   configuration: docs/conf.py
+
+# Specify build configuration
+build:
+  os: ubuntu-20.04
+  apt_packages:
+    - graphviz
+  tools:
+    python: "3.9"
+
+# Set the version of Python and requirements required to build docs
+python:
+  install:
+    - requirements: docs/rtd-pip-requirements
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs

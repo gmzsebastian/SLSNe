@@ -9,7 +9,7 @@ import sys
 from pkg_resources import DistributionNotFound, get_distribution
 
 try:
-    __version__ = get_distribution("emcee").version
+    __version__ = get_distribution("slsne").version
 except DistributionNotFound:
     __version__ = "unknown version"
 
@@ -38,12 +38,15 @@ release = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.todo',
-    'sphinx.ext.mathjax',
-]
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.mathjax",
+    "myst_nb",
+    "IPython.sphinxext.ipython_console_highlighting",
+    ]
+
+myst_enable_extensions = ["dollarmath", "colon_fence"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -75,3 +78,15 @@ napoleon_numpy_docstring = True
 
 # Todo settings
 todo_include_todos = True
+
+# Additional options for LaTeX output, e.g., for PDF generation.
+latex_elements = {
+    # Additional stuff for the LaTeX preamble
+    'preamble': r'''
+        \usepackage{amsmath,amsfonts,amssymb,amsthm}
+    ''',
+}
+
+# Example configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {'https://docs.python.org/3/': None}
+nb_execution_mode = "off"  # Disable execution for MyST-NB
