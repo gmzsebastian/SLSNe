@@ -6,3 +6,4 @@ matplotlib
 
 # Testing dependencies
 pytest
+pytest-mock

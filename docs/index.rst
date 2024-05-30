@@ -21,6 +21,7 @@ For examples on how to access the data see the Tutorials menu.
    tutorials/lightcurve
    tutorials/kcorrect
    tutorials/bolometric
+   tutorials/parameters
 
 License & Attribution
 ---------------------
