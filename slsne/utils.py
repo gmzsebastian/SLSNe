@@ -400,7 +400,7 @@ def read_phot(object_name):
     Parameters
     ----------
     object_name : str
-        Name of the SLSN
+        Name of the supernova.
 
     Returns
     -------
@@ -409,3 +409,67 @@ def read_phot(object_name):
     """
     phot = table.Table.read(os.path.join(data_dir, 'supernovae', object_name, f'{object_name}.txt'), format='ascii')
     return phot
+
+
+def read_bolo(object_name):
+    """
+    Get the bolometric parameters of a supernova.
+
+    Parameters
+    ----------
+    object_name : str
+        Name of the supernova.
+
+    Returns
+    -------
+    bolo : astropy.table.Table
+        Table with the bolometric luminosity,
+        radius, and temperature.
+    """
+    bolo = table.Table.read(os.path.join(data_dir, 'supernovae', object_name, f'{object_name}_bol.txt'), format='ascii')
+    return bolo
+
+
+def calc_flux_lum(phot, redshift):
+    """
+    Calculate F_lambda and L_lambda for a photometry file,
+    given a redshift.
+
+    Parameters
+    ----------
+    phot : astropy.table.Table
+        Table with photometry data
+    redshift : float
+        Redshift of the object
+
+    Returns
+    -------
+    F_lambda : array
+        Array of flux values in erg/s/cm^2/A
+    L_lambda : array
+        Array of luminosity values in erg/s/A
+    """
+
+    # If 'zeropoint' or 'cenwave' not in phot, calculate them using quick_cenwave_zeropoint
+    if not all([i in phot.keys() for i in ['zeropoint', 'cenwave']]):
+        cenwaves, zeropoints = quick_cenwave_zeropoint(phot)
+        phot['zeropoint'] = zeropoints
+        phot['cenwave'] = cenwaves
+
+    # Make sure Mag is a key in phot
+    if not all([i in phot.keys() for i in ['Mag']]):
+        raise ValueError('Photometry table must have keys "Mag"')
+
+    # Calculate the luminosity distance
+    DL = calc_DL(redshift) * u.pc
+
+    # Convert to F_nu using zeropoints in table
+    F_nu_phot = 10 ** (-0.4 * phot['Mag']) * (phot['zeropoint'] * u.Jy)
+
+    # Calculate flux
+    F_lambda = F_nu_phot.to(u.erg / u.s / u.cm / u.cm / u.AA, equivalencies=u.spectral_density(phot['cenwave'] * u.AA))
+
+    # Calculate luminosity
+    L_lambda = F_lambda * 4 * np.pi * DL.to(u.cm) ** 2 * (1 + redshift)
+
+    return F_lambda, L_lambda

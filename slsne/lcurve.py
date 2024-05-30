@@ -28,6 +28,15 @@ exists = [i.split('/')[-1] for i in directories]
 # Only select the items in data_table that are in use_names and in good
 data_table = data_table[np.isin(data_table['Name'], use_names) & np.isin(data_table['Name'], exists)]
 
+# Optimal parameters for the bolometric scaling
+OPTIMAL_PARAMS = np.array([5.82642369e+02, -6.84939538e+02,  2.95856107e+02, -5.59918505e+01,
+                           3.91355582e+00,  2.16517179e+01, -2.52987467e+01,  1.09807710e+01,
+                           -2.10200072e+00,  1.49953925e-01, -7.39934841e-02,  8.37511551e-02,
+                           -3.55398351e-02,  6.69229149e-03, -4.71480374e-04, -8.87603076e-04,
+                           1.04363068e-03, -4.55003242e-04,  8.74187767e-05, -6.25775202e-06,
+                           3.47732275e-06, -4.05653087e-06,  1.75915344e-06, -3.36719198e-07,
+                           2.40370778e-08])
+
 
 def interpolate_1D(time, flux, samples, left=np.nan, right=np.nan):
     """
@@ -466,3 +475,83 @@ def fit_map(phot, redshift, peak=None, boom=None, remove_ignore=True):
     stretch, amplitude, offset = result.x
 
     return stretch, amplitude, offset
+
+
+def bol_model(phase, wavelength, degree_phase=4, degree_wavelength=4, params=OPTIMAL_PARAMS):
+    """
+    Calculate the bolometric scaling of a light curve based on the optimally
+    determined parameters of a polynomial fit.
+
+    Parameters
+    ----------
+    phase : array
+        Phase of the light curve.
+    wavelength : array
+        Wavelength of the light curve.
+    params : array
+        Array of parameters for the polynomial fit, must have shape
+        ((degree_phase), (degree_wavelength)).
+
+    Returns
+    -------
+    scaling : arary
+        The scaling of the light curve based on the polynomial fit.
+    """
+    terms = []
+    for i in range(degree_phase + 1):
+        for j in range(degree_wavelength + 1):
+            terms.append((phase ** i) * (wavelength ** j))
+    return np.dot(params, terms)
+
+
+def get_bolcorr(phot, redshift, peak, remove_ignore=True):
+    """
+    Get the bolometric correction of the photometry.
+
+    Parameters
+    ----------
+    phot : astropy.table.table.Table
+        Table with the photometry.
+    redshift : float
+        Redshift of the supernova.
+    peak : float
+        Peak date of the supernova in units of MJD.
+    remove_ignore : bool, default True
+        Remove photometry that should be ignored.
+
+    Returns
+    -------
+    bol_scaling : array
+        The bolometric scaling factor of the photometry.
+    """
+
+    # Make sure required keys are in the photometry table
+    required_keys = ['MJD', 'Telescope', 'Instrument', 'System', 'Filter']
+    missing_keys = [key for key in required_keys if key not in phot.keys()]
+    if missing_keys:
+        raise ValueError(f'{", ".join(missing_keys)} key(s) not found in photometry table.')
+
+    # Remove photometry that should be ignored, or that are upper limits
+    use = np.array([True] * len(phot))
+    if ('Ignore' in phot.keys()) and remove_ignore:
+        use[phot['Ignore'] == 'True'] = False
+    # Always remove upper limits
+    if 'UL' in phot.keys():
+        use[phot['UL'] == 'True'] = False
+
+    # Make sure the photometry table is not empty
+    if len(phot) == 0:
+        raise ValueError('No usable photometry found in phot table.')
+
+    # Get filter wavelengths, zeropoints, and phase
+    phot['cenwave'], phot['zeropoint'] = quick_cenwave_zeropoint(phot)
+    phase0 = peak
+    phot['phase'] = (phot['MJD'] - phase0) / (1 + redshift)
+
+    # Calculate the bolometric scaling
+    use_phase = np.array(phot['Phase'])
+    use_wave = np.log10(phot['cenwave'] / (1 + redshift))
+    bol_scaling = 10 ** bol_model(use_phase, use_wave)
+
+    # Return the bolometric scaling
+    return bol_scaling

@@ -1,9 +1,10 @@
 from ..utils import (define_filters, get_cenwave, quick_cenwave_zeropoint,
-                     check_filters, plot_colors, read_phot)
+                     check_filters, plot_colors, read_phot, calc_flux_lum)
 from astropy.table import Table
 import os
 import pytest
 import numpy as np
+from astropy import units as u
 
 
 @pytest.fixture
@@ -135,3 +136,21 @@ def test_read_phot(mocker):
     assert isinstance(phot, Table)
     assert len(phot) >= 1
     assert 'MJD' in phot.colnames
+
+
+def test_calc_flux_lum(mocker):
+    # Create a mock photometry table
+    phot = Table({
+        'Mag': [-20.0],
+        'zeropoint': [3631.0],
+        'cenwave': [5500.0]
+    })
+
+    # Call the function with the mock photometry table and a test redshift
+    F_lambda, L_lambda = calc_flux_lum(phot, 0.5)
+
+    # Check that the returned flux and luminosity are correct
+    assert isinstance(F_lambda, u.Quantity)
+    assert isinstance(L_lambda, u.Quantity)
+    assert np.isclose(F_lambda.value[0], 0.359850, rtol=1e-5)
+    assert np.isclose(L_lambda.value[0], 5.500422e+56, rtol=1e-5)
