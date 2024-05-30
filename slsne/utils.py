@@ -10,6 +10,8 @@ import numpy as np
 from astropy import table
 import re
 from matplotlib.pyplot import cm
+from astropy import units as u
+from astropy.cosmology import Planck15 as cosmo
 
 # Get directory with reference data
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
@@ -351,3 +353,59 @@ def plot_colors(band):
 
     # Get the color for the given band, default to 'k' if not found
     return band_color_map.get(band, 'k')
+
+
+def calc_DL(redshift):
+    """
+    Calculate the luminosity distance in pc for a given redshift.
+
+    Parameters
+    ----------
+    redshift : float
+        Redshift of the object
+
+    Returns
+    -------
+    DL : float
+        Luminosity distance in pc
+    """
+    DL = cosmo.luminosity_distance(z=redshift).to(u.pc).value
+    return DL
+
+
+def calc_DM(redshift):
+    """
+    Calculate the distance modulus for a given redshift.
+
+    Parameters
+    ----------
+    redshift : float
+        Redshift of the object
+
+    Returns
+    -------
+    DM : float
+        Distance modulus
+    """
+    DL = calc_DL(redshift)
+    DM = 5 * np.log10(DL / 10)
+    return DM
+
+
+def read_phot(object_name):
+    """
+    Read in a photometry file for a given SLSN from the
+    reference database.
+
+    Parameters
+    ----------
+    object_name : str
+        Name of the SLSN
+
+    Returns
+    -------
+    phot : astropy.table.Table
+        Table with photometry data
+    """
+    phot = table.Table.read(os.path.join(data_dir, 'supernovae', object_name, f'{object_name}.txt'), format='ascii')
+    return phot

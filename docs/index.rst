@@ -19,6 +19,7 @@ For examples on how to access the data see the Tutorials menu.
    :caption: Tutorials
 
    tutorials/lightcurve
+   tutorials/kcorrect
 
 License & Attribution
 ---------------------

@@ -1,4 +1,5 @@
-from ..utils import define_filters, get_cenwave, quick_cenwave_zeropoint, check_filters, plot_colors
+from ..utils import (define_filters, get_cenwave, quick_cenwave_zeropoint,
+                     check_filters, plot_colors, read_phot)
 from astropy.table import Table
 import os
 import pytest
@@ -124,3 +125,13 @@ def test_plot_colors_swift():
 
 def test_plot_colors_unknown_band():
     assert plot_colors('potato') == 'k'
+
+
+def test_read_phot(mocker):
+    # Call the function with a test object name
+    phot = read_phot('2018lfe')
+
+    # Check that the returned table is correct
+    assert isinstance(phot, Table)
+    assert len(phot) >= 1
+    assert 'MJD' in phot.colnames

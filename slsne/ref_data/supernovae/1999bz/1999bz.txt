@@ -1,0 +1,2 @@
+     MJD      Mag   Raw  MagErr  Telescope  Instrument  Filter     UL  System  Ignore               Source 
+ 51292.4  17.5471  17.6     0.1       KAIT          --       C  False    Vega   False  1999IAUC.7157....4P 

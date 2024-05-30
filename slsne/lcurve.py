@@ -9,7 +9,10 @@ Written by Sebastian Gomez, 2024.
 import os
 import numpy as np
 from astropy import table
+from scipy import interpolate
 import glob
+from scipy.optimize import minimize
+from .utils import quick_cenwave_zeropoint, calc_DM
 
 # Get directory with reference data
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
@@ -26,7 +29,7 @@ exists = [i.split('/')[-1] for i in directories]
 data_table = data_table[np.isin(data_table['Name'], use_names) & np.isin(data_table['Name'], exists)]
 
 
-def interpolate(time, flux, samples, left=np.nan, right=np.nan):
+def interpolate_1D(time, flux, samples, left=np.nan, right=np.nan):
     """
     Interpolates the flux values at arbitrary points using linear interpolation,
     after sorting them in order of time.
@@ -59,6 +62,54 @@ def interpolate(time, flux, samples, left=np.nan, right=np.nan):
     interpolated_flux = np.interp(samples, sorted_time, sorted_flux, left=left, right=right)
 
     return interpolated_flux
+
+
+def interpolate_2D(time, wavelength, flux, out_wave=None, out_phase=None):
+    """
+    Interpolate a 2D array that is a function of time and wavelength
+    to either a new wavelength or a new time.
+
+    Parameters
+    ----------
+    time : array
+        The array of time values.
+    wavelength : array
+        The array of wavelength values.
+    flux : array
+        The 2D array of flux values corresponding to the
+        time and wavelength values.
+    out_wave : array, default None
+        The array of new wavelength values.
+    out_phase : array, default None
+        The array of new time values.
+
+    Returns
+    -------
+    new_flux : array
+        The interpolated array of flux values at the new
+        wavelength or time values.
+    """
+
+    # Make sure at least one output parameter is specified
+    if (out_wave is None) and (out_phase is None):
+        raise ValueError('At least one of out_wave or out_phase must be specified.')
+
+    # Check that the shapes of the array are compatible
+    if flux.shape != (len(time), len(wavelength)):
+        raise ValueError('The shape of flux must be (len(time), len(wavelength)).')
+
+    # For output parameters that are not specified, use the input parameters
+    if out_wave is None:
+        out_wave = wavelength
+    if out_phase is None:
+        out_phase = time
+
+    # Create interinterpolator object
+    f = interpolate.RectBivariateSpline(wavelength, time, flux.T)
+    new_flux = np.array([f(wave, phase)[0][0] for wave, phase in zip(out_wave, out_phase)])
+
+    # Return the interpolated flux
+    return new_flux
 
 
 def get_all_lcs(band, names=None, data_table=data_table, include_bronze=False, shift_to_peak=True,
@@ -155,7 +206,7 @@ def get_all_lcs(band, names=None, data_table=data_table, include_bronze=False, s
             rest['Phase'] = rest['Phase'] - offset
 
         # Interpolate the light curve to the requested time samples
-        mean = interpolate(rest['Phase'], rest['Mean'], samples)
+        mean = interpolate_1D(rest['Phase'], rest['Mean'], samples)
 
         # Append the interpolated light curve to the array of light curves.
         if ('mean_array' not in locals()) or (i == 0):
@@ -189,3 +240,229 @@ def get_all_lcs(band, names=None, data_table=data_table, include_bronze=False, s
         return sigmas, (samples, mean_array)
     else:
         return sigmas
+
+
+def get_kcorr(phot, redshift, peak=None, boom=None, output_band=None, remove_ignore=True, stretch=1, offset=0):
+    """
+    Get the K-correction of the photometry.
+
+    Parameters
+    ----------
+    phot : astropy.table.table.Table
+        Table with the photometry.
+    redshift : float
+        Redshift of the supernova.
+    peak : float, default None
+        Peak date of the supernova in units of MJD.
+    boom : float, default None
+        Explosion date of the supernova in units of MJD.
+    output_band : str, default None
+        Output filter for K-corrected data. If None, all
+        photometry in the table will be corrected.
+    remove_ignore : bool, default True
+        Remove photometry that should be ignored.
+    stretch : float, default 1
+        Stretch factor for the light curve duration.
+    offset : float, default 0
+        Offset in phase for the light curve.
+    """
+
+    # Make sure required keys are in the photometry table
+    required_keys = ['MJD', 'Telescope', 'Instrument', 'System', 'Filter']
+    missing_keys = [key for key in required_keys if key not in phot.keys()]
+    if missing_keys:
+        raise ValueError(f'{", ".join(missing_keys)} key(s) not found in photometry table.')
+
+    # Select only the photometry in the requested filter
+    use = np.array([True] * len(phot))
+    if output_band is not None:
+        use[phot['Filter'] != output_band] = False
+    # Remove photometry that should be ignored, or that are upper limits
+    if ('Ignore' in phot.keys()) and remove_ignore:
+        use[phot['Ignore'] == 'True'] = False
+    # Always remove upper limits
+    if 'UL' in phot.keys():
+        use[phot['UL'] == 'True'] = False
+
+    # Make sure the photometry table is not empty
+    if len(phot) == 0:
+        raise ValueError(f'No usable photometry found in {output_band} filter.')
+
+    # Get filter wavelengths, zeropoints, and phase
+    phot['cenwave'], phot['zeropoint'] = quick_cenwave_zeropoint(phot)
+    if peak is not None:
+        phase0 = peak
+        map_dir = os.path.join(data_dir, 'peak_mesh.npz')
+    elif boom is not None:
+        phase0 = boom
+        map_dir = os.path.join(data_dir, 'boom_mesh.npz')
+    else:
+        raise ValueError('Either peak or boom must be specified.')
+
+    # Calculate the phase of the photometry
+    phot['phase'] = (phot['MJD'] - phase0) / (1 + redshift)
+
+    # Read in magnitude map
+    mag_map = np.load(map_dir)
+    map_phase = (mag_map.get('phase') - offset) / stretch
+    map_wavelength = mag_map.get('wavelength')
+    map_magnitude = mag_map.get('magnitude')
+
+    # Get input filter wavelength
+    obswave = np.array(phot['cenwave'][use])
+    # Get output filter wavelength
+    restwave = obswave / (1 + redshift)
+
+    # Interpolate the magnitude map to the observed and rest wavelengths
+    mean_rest_mag = interpolate_2D(map_phase.T[0], map_wavelength[0], map_magnitude, out_wave=restwave)
+    mean_obs_mag = interpolate_2D(map_phase.T[0], map_wavelength[0], map_magnitude, out_wave=obswave)
+
+    # Calculate K-correction
+    K_corr = np.nan * np.ones(len(phot))
+    K_corr[use] = mean_rest_mag - mean_obs_mag - 2.5 * np.log10(1 + redshift)
+
+    # Return the K-correction
+    return K_corr
+
+
+def map_model(stretch, amplitude, offset, obs_wave, obs_phase, map_wavelength, map_phase, map_magnitude):
+    """
+    Interpolates the given map data to generate a model light curve, with some stretch,
+    amplitude in magnitude, and offset in phase.
+
+    Parameters
+    ----------
+    stretch : float
+        The stretch factor for the phase.
+    amplitude : float
+        The amplitude to be added to the magnitude.
+    offset : float
+        The offset to be subtracted from the phase.
+    obs_wave : array
+        Array of observed wavelengths.
+    obs_phase : array
+        Array of observed phases.
+    map_wavelength : array
+        Array of map wavelengths.
+    map_phase : array
+        Array of map phases.
+    map_magnitude : array
+        Array of map magnitudes.
+
+    Returns
+    -------
+    f : array-like
+        Model light curve generated by interpolating the map data.
+
+    """
+    f = interpolate.RectBivariateSpline(map_wavelength, (map_phase - offset) / stretch, map_magnitude + amplitude)
+    return np.array([f.ev(w, p) for w, p in zip(obs_wave, obs_phase)])
+
+
+def objective(params, obs_wave, obs_phase, obs_mag, map_wavelength, map_phase, map_magnitude):
+    """
+    Objective function to minimize the difference between the observed and model light curves.
+
+    Parameters
+    ----------
+    params : array
+        Array of parameters to be optimized.
+    obs_wave : array
+        Array of observed wavelengths.
+    obs_phase : array
+        Array of observed phases.
+    obs_mag : array
+        Array of observed magnitudes.
+
+    Returns
+    -------
+    float
+        Sum of the squared differences between the observed and model light curves.
+    """
+    stretch, amplitude, offset = params
+    out_mag = map_model(stretch, amplitude, offset, obs_wave, obs_phase, map_wavelength, map_phase, map_magnitude)
+    return np.sum((out_mag - obs_mag)**2)
+
+
+def fit_map(phot, redshift, peak=None, boom=None, remove_ignore=True):
+    """
+    Fit the chosen magnitude map (Either peak or boom) to a photometry
+    table phot.
+
+    Parameters
+    ----------
+    phot : astropy.table.table.Table
+        Table with the photometry.
+    redshift : float
+        Redshift of the supernova.
+    peak : float, default None
+        Peak date of the supernova in units of MJD.
+    boom : float, default None
+        Explosion date of the supernova in units of MJD.
+    remove_ignore : bool, default True
+        Remove photometry that should be ignored.
+
+    Returns
+    -------
+    stretch : float
+        The stretch factor for the phase.
+    amplitude : float
+        The amplitude to be added to the magnitude.
+    offset : float
+        The offset to be subtracted from the phase.
+    """
+
+    # Make sure required keys are in the photometry table
+    required_keys = ['MJD', 'Mag', 'Telescope', 'Instrument', 'System', 'Filter']
+    missing_keys = [key for key in required_keys if key not in phot.keys()]
+    if missing_keys:
+        raise ValueError(f'{", ".join(missing_keys)} key(s) not found in photometry table.')
+
+    # Remove ignored photometry
+    if ('Ignore' in phot.keys()) and remove_ignore:
+        phot = phot[phot['Ignore'] == 'False']
+
+    # Make sure the photometry table is not empty
+    if len(phot) == 0:
+        raise ValueError('No usable photometry found in phot.')
+
+    # Get filter wavelengths, zeropoints
+    phot['cenwave'], phot['zeropoint'] = quick_cenwave_zeropoint(phot)
+    if peak is not None:
+        phase0 = peak
+        map_dir = os.path.join(data_dir, 'peak_mesh.npz')
+    elif boom is not None:
+        phase0 = boom
+        map_dir = os.path.join(data_dir, 'boom_mesh.npz')
+    else:
+        raise ValueError('Either peak or boom must be specified.')
+    phot['restwave'] = phot['cenwave'] / (1 + redshift)
+
+    # Read in magnitude map
+    mag_map = np.load(map_dir)
+    map_phase = mag_map.get('phase').T[0]
+    map_wavelength = mag_map.get('wavelength')[0]
+    map_magnitude = mag_map.get('magnitude').T
+
+    # Calculate the phase of the photometry
+    phot['phase'] = (phot['MJD'] - phase0) / (1 + redshift)
+
+    # Get the distance modulus
+    DM = calc_DM(redshift)
+
+    # Calculate absolute magnitudes
+    phot['abs_mag'] = phot['Mag'] - DM + 2.5 * np.log10(1 + redshift)
+
+    # Get data to fit
+    obs_wave = np.array(phot['restwave'])
+    obs_phase = np.array(phot['phase'])
+    obs_mag = np.array(phot['abs_mag'])
+
+    # Fit the data
+    initial_guess = [1.0, 0.0, 0.0]
+    result = minimize(objective, initial_guess, args=(obs_wave, obs_phase, obs_mag,
+                                                      map_wavelength, map_phase, map_magnitude),
+                      bounds=[(0.3, 2), (-5, 5), (-8, 8)])
+    stretch, amplitude, offset = result.x
+
+    return stretch, amplitude, offset

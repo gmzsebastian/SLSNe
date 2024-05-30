@@ -1,0 +1,4 @@
+         MJD      Mag    Raw  MagErr  Telescope  Instrument  Filter     UL  System  Ignore               Source 
+ 57802.30629  19.7956  19.85     0.1        PS1          --       i  False      AB   False  2015ATel.7153....1H 
+ 57804.58218  19.7556  19.81     0.1        PS1          --       i  False      AB   False  2015ATel.7153....1H 
+    57814.58   19.727   19.8     0.1        PS1          --       r  False      AB   False  2015ATel.7153....1H 

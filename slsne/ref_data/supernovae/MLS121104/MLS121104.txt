@@ -1,0 +1,5 @@
+          MJD      Mag      Raw  MagErr  Telescope  Instrument  Filter     UL  System  Ignore               Source 
+ 56235.439941  19.3205  19.7819  0.0804       CRTS          --       C  False    Vega   False  2009ApJ...696..870D 
+  56235.47998  19.4025  19.8638  0.0849       CRTS          --       C  False    Vega   False  2009ApJ...696..870D 
+  56235.52002  19.3121  19.7735  0.0814       CRTS          --       C  False    Vega   False  2009ApJ...696..870D 
+ 56235.560059  19.1949  19.6563   0.076       CRTS          --       C  False    Vega   False  2009ApJ...696..870D 
