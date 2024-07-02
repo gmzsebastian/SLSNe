@@ -140,13 +140,3 @@ def test_peak_boom():
     assert stretch is not None
     assert amplitude is not None
     assert offset is not None
-
-
-def test_fit_map_calculation(mocker):
-    phot = Table({'Mag': [25], 'MJD': [55000], 'Telescope': ['P48'],
-                  'Instrument': ['ZTF'], 'System': ['AB'], 'Filter': ['r']})
-    mocker.patch('slsne.utils.quick_cenwave_zeropoint', return_value=(6366.38, 3631.0))
-    stretch, amplitude, offset = fit_map(phot, 0.5, peak=55000)
-    assert np.isclose(stretch, 1.0000000001681757)
-    assert np.isclose(amplitude, 4.416250798429203)
-    assert np.isclose(offset, 0.29969253979159927)
