@@ -12,7 +12,7 @@ from astropy import table
 from scipy import interpolate
 import glob
 from scipy.optimize import minimize
-from .utils import quick_cenwave_zeropoint, calc_DM
+from .utils import quick_cenwave_zeropoint, calc_DM, get_cenwave
 
 # Get directory with reference data
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
@@ -266,8 +266,9 @@ def get_kcorr(phot, redshift, peak=None, boom=None, output_band=None, remove_ign
     boom : float, default None
         Explosion date of the supernova in units of MJD.
     output_band : str, default None
-        Output filter for K-corrected data. If None, all
-        photometry in the table will be corrected.
+        If None, the data will be corrected to the rest-frame
+        version of the input data. If a string, the data will
+        be corrected to the central wavelength of that band.
     remove_ignore : bool, default True
         Remove photometry that should be ignored.
     stretch : float, default 1
@@ -282,10 +283,8 @@ def get_kcorr(phot, redshift, peak=None, boom=None, output_band=None, remove_ign
     if missing_keys:
         raise ValueError(f'{", ".join(missing_keys)} key(s) not found in photometry table.')
 
-    # Select only the photometry in the requested filter
+    # Select only the useful photometry
     use = np.array([True] * len(phot))
-    if output_band is not None:
-        use[phot['Filter'] != output_band] = False
     # Remove photometry that should be ignored, or that are upper limits
     if ('Ignore' in phot.keys()) and remove_ignore:
         use[phot['Ignore'] == 'True'] = False
@@ -319,8 +318,16 @@ def get_kcorr(phot, redshift, peak=None, boom=None, output_band=None, remove_ign
 
     # Get input filter wavelength
     obswave = np.array(phot['cenwave'][use])
-    # Get output filter wavelength
-    restwave = obswave / (1 + redshift)
+
+    if output_band is not None:
+        # Make sure output_band is a string
+        if not isinstance(output_band, str):
+            raise ValueError(f'output_band {output_band} must be a string.')
+        # Get the rest-frame wavelength of the output band
+        restwave = np.array([get_cenwave(output_band, verbose=False)] * len(obswave)) / (1 + redshift)
+    else:
+        # Get output filter wavelength
+        restwave = obswave / (1 + redshift)
 
     # Interpolate the magnitude map to the observed and rest wavelengths
     mean_rest_mag = interpolate_2D(map_phase.T[0], map_wavelength[0], map_magnitude, out_wave=restwave)
@@ -555,3 +562,43 @@ def get_bolcorr(phot, redshift, peak, remove_ignore=True):
 
     # Return the bolometric scaling
     return bol_scaling
+
+
+def get_lc(object_name, lc_type='phot'):
+    """
+    Get the light curve of a supernova from the reference data directory.
+
+    Parameters
+    ----------
+    object_name : str
+        Name of the supernova to get the light curve from.
+    lc_type : str, default 'phot'
+        Type of light curve to get. Can be 'phot', 'model',
+        'bol' or 'rest'.
+        'phot' - Observed photometry of the SN.
+        'model' - MOSFiT light curve model of the photometry.
+        'bol' - Bolometric parameters of the SN.
+        'rest' - Rest-frame MOSFiT light curve model.
+    Returns
+    -------
+    lc : astropy.table.table.Table
+        Light curve of the supernova.
+    """
+
+    # Import light curve data
+    if lc_type == 'phot':
+        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                           object_name, f'{object_name}.txt'), format='ascii')
+    elif lc_type == 'model':
+        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                           object_name, f'{object_name}_model.txt'), format='ascii')
+    elif lc_type == 'rest':
+        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                           object_name, f'{object_name}_rest.txt'), format='ascii')
+    elif lc_type == 'bol':
+        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                           object_name, f'{object_name}_bol.txt'), format='ascii')
+    else:
+        raise ValueError(f'lc_type {lc_type} must be phot, model, bol, or rest.')
+
+    return lc

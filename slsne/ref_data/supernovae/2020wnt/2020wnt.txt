@@ -364,7 +364,7 @@
      59228.42  15.3353    16.59    0.08      Swift        UVOT       V  False      AB   False  2022MNRAS.517.2056G 
      59228.42  15.8748    17.53    0.08      Swift        UVOT       B  False      AB   False  2022MNRAS.517.2056G 
      59228.42  16.6545    18.62    0.13      Swift        UVOT       U  False      AB   False  2022MNRAS.517.2056G 
-     59228.42  17.7901    21.64    -1.0      Swift        UVOT    UVM2  False      AB   False  2022MNRAS.517.2056G 
+     59228.42  17.7901    21.64    -1.0      Swift        UVOT    UVM2   True      AB   False  2022MNRAS.517.2056G 
      59228.42  18.1623    22.07     0.5      Swift        UVOT    UVW2  False      AB   False  2022MNRAS.517.2056G 
      59228.42  18.5226    21.14    0.43      Swift        UVOT    UVW1  False      AB   False  2022MNRAS.517.2056G 
      59229.59  15.6887    17.22    0.03        TNT          --       g  False      AB   False  2022MNRAS.517.2056G 
@@ -464,7 +464,7 @@
      59247.58  16.9048    18.56    0.02        TNT          --       B  False    Vega   False  2022MNRAS.517.2056G 
      59248.08  19.3023    23.21    1.51      Swift        UVOT    UVW2  False      AB   False  2022MNRAS.517.2056G 
      59248.08  18.6145    20.58    0.52      Swift        UVOT       U  False      AB   False  2022MNRAS.517.2056G 
-     59248.08  17.5801    21.43    -1.0      Swift        UVOT    UVM2  False      AB   False  2022MNRAS.517.2056G 
+     59248.08  17.5801    21.43    -1.0      Swift        UVOT    UVM2   True      AB   False  2022MNRAS.517.2056G 
      59248.08  16.8948    18.55    0.09      Swift        UVOT       B  False      AB   False  2022MNRAS.517.2056G 
      59248.08  15.9053    17.16    0.08      Swift        UVOT       V  False      AB   False  2022MNRAS.517.2056G 
  59248.121093  16.2367   17.768   0.086        LCO         LCO       g  False      AB   False             ThisWork 
@@ -537,7 +537,7 @@
      59267.46  16.9453     18.2    0.02        TNT          --       V  False    Vega   False  2022MNRAS.517.2056G 
      59267.46  17.5487    19.08    0.03        TNT          --       g  False      AB   False  2022MNRAS.517.2056G 
      59267.46  18.0148    19.67    0.02        TNT          --       B  False    Vega   False  2022MNRAS.517.2056G 
-      59268.2  16.0401    19.89    -1.0      Swift        UVOT    UVM2  False      AB   False  2022MNRAS.517.2056G 
+      59268.2  16.0401    19.89    -1.0      Swift        UVOT    UVM2   True      AB   False  2022MNRAS.517.2056G 
       59268.2  16.8153    18.07    0.26      Swift        UVOT       V  False      AB   False  2022MNRAS.517.2056G 
       59268.2  17.7548    19.41     0.3      Swift        UVOT       B  False      AB   False  2022MNRAS.517.2056G 
       59268.2  18.5623    22.47    2.31      Swift        UVOT    UVW2  False      AB   False  2022MNRAS.517.2056G 
@@ -554,7 +554,7 @@
      59271.77  16.6756    17.77    0.04    Schmidt          --       r  False      AB   False  2022MNRAS.517.2056G 
      59271.77  17.0453     18.3    0.05    Schmidt          --       V  False    Vega   False  2022MNRAS.517.2056G 
  59272.234833  16.6172  17.6005  0.0455      ATLAS       ATLAS  orange  False      AB   False  2018PASP..130f4505T 
-     59272.37  17.9001    21.75    -1.0      Swift        UVOT    UVM2  False      AB   False  2022MNRAS.517.2056G 
+     59272.37  17.9001    21.75    -1.0      Swift        UVOT    UVM2   True      AB   False  2022MNRAS.517.2056G 
      59272.37  19.0323    22.94    0.96      Swift        UVOT    UVW2  False      AB   False  2022MNRAS.517.2056G 
      59273.16  17.7087    19.24    0.12        P48         ZTF       g  False      AB   False  2022MNRAS.517.2056G 
      59273.21  16.7056     17.8    0.04        P48         ZTF       r  False      AB   False  2022MNRAS.517.2056G 
@@ -563,7 +563,7 @@
      59275.26  16.6856    17.78    0.04        P48         ZTF       r  False      AB   False  2022MNRAS.517.2056G 
  59276.233536  16.6244  17.6077  0.0473      ATLAS       ATLAS  orange  False      AB   False  2018PASP..130f4505T 
      59276.82  16.9953    18.25    0.24      Swift        UVOT       V  False      AB   False  2022MNRAS.517.2056G 
-     59276.82  17.5401    21.39    -1.0      Swift        UVOT    UVM2  False      AB   False  2022MNRAS.517.2056G 
+     59276.82  17.5401    21.39    -1.0      Swift        UVOT    UVM2   True      AB   False  2022MNRAS.517.2056G 
      59276.82  17.8548    19.51    0.22      Swift        UVOT       B  False      AB   False  2022MNRAS.517.2056G 
      59276.82  19.0726    21.69    0.76      Swift        UVOT    UVW1  False      AB   False  2022MNRAS.517.2056G 
      59276.82  19.1045    21.07     0.8      Swift        UVOT       U  False      AB   False  2022MNRAS.517.2056G 
@@ -590,7 +590,7 @@
      59288.78  18.6648    20.32    0.63      Swift        UVOT       B  False      AB   False  2022MNRAS.517.2056G 
      59288.78  20.4045    22.37    2.56      Swift        UVOT       U  False      AB   False  2022MNRAS.517.2056G 
      59288.78  16.8053    18.06    0.26      Swift        UVOT       V  False      AB   False  2022MNRAS.517.2056G 
-     59288.78  17.6001    21.45    -1.0      Swift        UVOT    UVM2  False      AB   False  2022MNRAS.517.2056G 
+     59288.78  17.6001    21.45    -1.0      Swift        UVOT    UVM2   True      AB   False  2022MNRAS.517.2056G 
      59290.39  15.5821     15.8    0.03        NOT      NOTCam       H  False    Vega   False  2022MNRAS.517.2056G 
      59290.39  15.6165   15.747    0.12        NOT      NOTCam       K  False    Vega   False  2022MNRAS.517.2056G 
      59290.39  15.9202    16.26    0.03        NOT      NOTCam       J  False    Vega   False  2022MNRAS.517.2056G 
@@ -598,7 +598,7 @@
      59291.03  18.2348    19.89    0.23      Swift        UVOT       B  False      AB   False  2022MNRAS.517.2056G 
      59291.03  18.2023    22.11    1.16      Swift        UVOT    UVW2  False      AB   False  2022MNRAS.517.2056G 
      59291.03  17.0353    18.29    0.19      Swift        UVOT       V  False      AB   False  2022MNRAS.517.2056G 
-     59291.03  16.6501     20.5    -1.0      Swift        UVOT    UVM2  False      AB   False  2022MNRAS.517.2056G 
+     59291.03  16.6501     20.5    -1.0      Swift        UVOT    UVM2   True      AB   False  2022MNRAS.517.2056G 
      59291.03  17.8626    20.48    0.57      Swift        UVOT    UVW1  False      AB   False  2022MNRAS.517.2056G 
  59291.117187  17.5893  19.1206  0.1067        LCO         LCO       g  False      AB   False             ThisWork 
  59291.121093  16.7853  17.8797  0.0891        LCO         LCO       r  False      AB   False             ThisWork 

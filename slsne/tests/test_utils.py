@@ -153,4 +153,4 @@ def test_calc_flux_lum(mocker):
     assert isinstance(F_lambda, u.Quantity)
     assert isinstance(L_lambda, u.Quantity)
     assert np.isclose(F_lambda.value[0], 0.359850, rtol=1e-5)
-    assert np.isclose(L_lambda.value[0], 5.500422e+56, rtol=1e-5)
+    assert np.isclose(L_lambda.value[0], 5.505261e+56, rtol=1e-5)

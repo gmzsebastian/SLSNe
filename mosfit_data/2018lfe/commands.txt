@@ -1,0 +1,2 @@
+mpirun -np 6 mosfit -e 2018lfe.json -F redshift 0.35 -m slsnni -N 150 -E 500 800 --local-data-only -c -S 600 -i 15000 --band-list r -x radiusphot temperaturephot luminosities_out times_out -qs
+mpirun -np 6 mosfit -e 2018lfe.json -F redshift 0.35 -m slsnni -N 150 -E 500 800 --local-data-only -c -S 600 -i 100 --band-list r -x radiusphot temperaturephot luminosities_out times_out -qs -w products/2018lfe_walkers.json --no-fracking -b 0

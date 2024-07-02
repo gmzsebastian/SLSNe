@@ -9,9 +9,10 @@ import os
 import numpy as np
 from astropy import table
 import re
+import json
 from matplotlib.pyplot import cm
 from astropy import units as u
-from astropy.cosmology import Planck15 as cosmo
+from astropy.cosmology import Planck18 as cosmo
 
 # Get directory with reference data
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +21,44 @@ data_dir = os.path.join(current_file_dir, 'ref_data')
 # Color-blind friendly red and green colors
 cb_g = [0.288921, 0.758394, 0.428426, 1.]
 cb_r = [0.862745, 0.078431, 0.235294, 1.]
+
+
+def get_data_table(data_dir=data_dir):
+    """
+    Read in the data table with the names of the supernovae,
+    their redshifts, and other key parameters.
+
+    Parameters
+    ----------
+    data_dir : str
+        Name of directory that contains the data table.
+
+    Returns
+    -------
+    data_table : astropy.table.table.Table
+        Astropy table with the the SLSNe and all their parameters.
+    """
+    data_table = table.Table.read(os.path.join(data_dir, 'sne_data.txt'), format='ascii')
+    return data_table
+
+
+def get_use_names(data_dir=data_dir):
+    """
+    Read in the list of SLSNe that are to be used in the
+    reference database.
+
+    Parameters
+    ----------
+    data_dir : str
+        Name of directory that contains the 'use_names.txt' file.
+
+    Returns
+    -------
+    use_names : np.array
+        Array with the names of the SLSNe to be used.
+    """
+    use_names = np.genfromtxt(os.path.join(data_dir, 'use_names.txt'), dtype='str')
+    return use_names
 
 
 def define_filters(data_dir=data_dir):
@@ -473,3 +512,102 @@ def calc_flux_lum(phot, redshift):
     L_lambda = F_lambda * 4 * np.pi * DL.to(u.cm) ** 2 * (1 + redshift)
 
     return F_lambda, L_lambda
+
+
+def create_json(object_name, output_dir, default_err=0.1):
+    """
+    Create the JSON file that MOSFiT needs to fit the photometry
+    from a photometry file of a known SLSN in the reference database.
+
+    Parameters
+    ----------
+    object_name : str
+        Name of the SLSN.
+    output_dir : str
+        Name of the directory where the JSON file will be
+    default_err : float, default 0.1
+        Default error to use for the photometry when it
+        is missing or equal to 0.
+
+    Returns
+    -------
+    Nothing, it just saves the JSON file.
+    """
+
+    # Get photometry table
+    phot = read_phot(object_name)
+
+    # Rename columns into MOSFiT format
+    use = phot['Ignore'] == 'False'
+    time = phot[use]['MJD'].astype(float)
+    magnitude = phot[use]['Mag'].astype(float)
+    e_magnitude = phot[use]['MagErr'].astype(float)
+    upperlimit = np.array([False] * len(time))
+    upperlimit[phot[use]['UL'] == 'True'] = True
+    band = np.array(phot[use]['Filter']).astype(str)
+    telescope = np.array(phot[use]['Telescope']).astype(str)
+    instrument = np.array(phot[use]['Instrument']).astype(str)
+    system = np.array(phot[use]['System']).astype(str)
+    u_time = ['MJD'] * len(time)
+    source = ['1'] * len(time)
+
+    # Replace value of e_magnitude when there is none
+    e_magnitude[e_magnitude == 0.0] = default_err
+    e_magnitude[np.isnan(e_magnitude)] = default_err
+
+    # Create output table
+    output = table.Table([time, magnitude, e_magnitude, upperlimit, band, telescope, instrument, system,
+                          u_time, source],
+                         names=['time', 'magnitude', 'e_magnitude', 'upperlimit', 'band', 'telescope',
+                                'instrument', 'system', 'u_time', 'source'])
+
+    # Convert to Pandas
+    photometry = output.to_pandas().to_dict(orient='records')
+
+    # Create data dictionary for MOSFiT data
+    template = {
+        object_name: {
+            "name": object_name,
+            "sources": [
+                {
+                    "name": "Gomez et al. 2024",
+                    "alias": "1"
+                }
+            ],
+            "alias": [
+                {
+                    "value": object_name,
+                    "source": "1"
+                }
+            ],
+            "photometry": []
+        }
+    }
+    template[object_name]['photometry'] = photometry
+
+    # Save output
+    print(f'\nSaving JSON file for {object_name}...')
+    file_path = os.path.join(output_dir, f'{object_name}.json')
+    with open(file_path, 'w') as file:
+        json.dump(template, file, indent=4)
+
+
+def calc_percentile(samples):
+    """
+    This function calculates the 1-sigma uncertainties
+    for the samples.
+
+    Parameters
+    ----------
+    samples : np.ndarray
+        The samples to calculate the uncertainties.
+
+    Returns
+    -------
+    output : tuple
+        The median, upper uncertainty, and lower uncertainty
+        of the samples.
+    """
+    values = np.percentile(samples, [15.87, 50, 84.13])
+    output = values[1], values[2] - values[1], values[1] - values[0]
+    return output

@@ -5,20 +5,43 @@ import pytest
 
 
 def test_interpolate_1D():
+    # Dummy Values
     time = np.array([1, 2, 3, 4, 5])
     flux = np.array([10, 20, 30, 40, 50])
     samples = np.array([1.5, 2.5, 3.5, 4.5])
 
-    expected_output = np.array([15, 25, 35, 45])  # Expected interpolated flux values
+    # Expected answer from dummy values
+    expected = np.array([15., 25., 35., 45.])
 
-    output = interpolate_1D(time, flux, samples)
+    # Make sure expected value is correct
+    calculated = interpolate_1D(time, flux, samples)
+    assert np.allclose(calculated, expected)
+    assert len(calculated) == len(samples)
 
-    assert np.allclose(output, expected_output)
 
-    # Test with samples outside the time range
-    samples_outside = np.array([-1, 6])
-    output = interpolate_1D(time, flux, samples_outside)
-    assert np.isnan(output).all(), "The function should return np.nan for samples outside the time range"
+def test_interpolate_1D_order():
+    # Dummy Values
+    time = np.array([1, 4, 3, 2, 5])
+    flux = np.array([10, 40, 30, 20, 50])
+    samples = np.array([1.5, 2.5, 3.5, 4.5])
+
+    # Expected answer from dummy values
+    expected = np.array([15., 25., 35., 45.])
+
+    # Make sure expected value is correct
+    calculated = interpolate_1D(time, flux, samples)
+    assert np.allclose(calculated, expected)
+
+
+def test_interpolate_1D_outside():
+    # Dummy Values
+    time = np.array([1, 2, 3, 4, 5])
+    flux = np.array([10, 20, 30, 40, 50])
+    samples = np.array([-3.0, 8.0])
+
+    # Make sure expected value is nan
+    calculated = interpolate_1D(time, flux, samples)
+    assert np.isnan(calculated).all(), "The function should return np.nan for samples outside the time range"
 
 
 def test_interpolate_2D():
@@ -125,5 +148,5 @@ def test_fit_map_calculation(mocker):
     mocker.patch('slsne.utils.quick_cenwave_zeropoint', return_value=(6366.38, 3631.0))
     stretch, amplitude, offset = fit_map(phot, 0.5, peak=55000)
     assert np.isclose(stretch, 1.0000000001681757)
-    assert np.isclose(amplitude, 4.417201985290917)
-    assert np.isclose(offset, 0.29981190993624574)
+    assert np.isclose(amplitude, 4.416250798429203)
+    assert np.isclose(offset, 0.29969253979159927)

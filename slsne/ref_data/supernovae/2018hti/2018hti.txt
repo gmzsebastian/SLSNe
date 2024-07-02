@@ -1031,7 +1031,7 @@
  58703.522571  19.0882  20.3991  0.3278      ATLAS       ATLAS    cyan  False      AB   False  2018PASP..130f4505T 
  58707.589642  19.1749  20.4858  0.3267      ATLAS       ATLAS    cyan  False      AB   False  2018PASP..130f4505T 
  58708.025899  19.0331    20.16  0.0525       Gaia        Gaia       G  False      AB   False                 Gaia 
-     58712.64   18.572    18.61    -1.0       WISE        WISE      W2  False      AB   False  2022MNRAS.512.4484F 
+     58712.64   18.572    18.61    -1.0       WISE        WISE      W2   True      AB   False  2022MNRAS.512.4484F 
      58712.64  19.0706    19.13    0.16       WISE        WISE      W1  False      AB   False  2022MNRAS.512.4484F 
       58715.5   15.862     15.9    -1.0       WISE        WISE      W2   True    Vega    True  2022MNRAS.513.4057S 
       58715.5  16.4806    16.54    0.18       WISE        WISE      W1  False    Vega    True  2022MNRAS.513.4057S 

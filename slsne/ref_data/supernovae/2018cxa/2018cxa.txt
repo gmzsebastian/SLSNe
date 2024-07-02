@@ -73,7 +73,7 @@
  58336.332031  21.6253  21.9301  0.3217        P48         ZTF       g  False      AB   False                  ZTF 
  58336.332031  21.4111  21.7159  0.2422        P48         ZTF       g  False      AB   False                  ZTF 
  58336.390625  20.8254  21.0369  0.1226        P48         ZTF       r  False      AB   False                  ZTF 
- 58336.394531  20.6138  20.8253    -1.0        P48         ZTF       r  False      AB   False                  ZTF 
+ 58336.394531  20.6138  20.8253    -1.0        P48         ZTF       r   True      AB   False                  ZTF 
  58337.378906  22.4044  22.7093  0.3585        P48         ZTF       g  False      AB   False                  ZTF 
  58337.573248  19.7096  19.9074    -1.0      ATLAS       ATLAS  orange   True      AB   False  2018PASP..130f4505T 
  58338.570445  19.8414  20.1116    -1.0      ATLAS       ATLAS    cyan   True      AB   False  2018PASP..130f4505T 

@@ -11,9 +11,14 @@ setup(
     python_requires='>=3.6',
     packages=['slsne'],
     include_package_data=True,
-    package_data={'slsne': ['ref_data/*', 'ref_data/supernovae/*/*.txt']},
+    package_data={'slsne': ['ref_data/*', 'ref_data/supernovae/*/*.txt', 'ref_data/filters/*.dat']},
     install_requires=[
         'numpy',
         'matplotlib',
+        'dust_extinction',
+        'extinction',
+        'astropy',
+        'scipy',
+        'numexpr'
     ]
 )
