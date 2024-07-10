@@ -10,6 +10,13 @@ Package designed to work with the data of Type I Superluminous Supernovae (SLSNe
 ![License](http://img.shields.io/badge/license-MIT-blue.svg)
 [![Coverage Status](https://coveralls.io/repos/github/gmzsebastian/SLSNe/badge.svg?branch=main)](https://coveralls.io/github/gmzsebastian/SLSNe?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/slsne/badge/?version=latest)](https://slsne.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12706201.svg)](https://doi.org/10.5281/zenodo.12706201)
+
+The package can be installed via PyPI
+
+```
+pip install slsne
+```
 
 ## Attribution
 
