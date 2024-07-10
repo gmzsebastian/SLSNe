@@ -1,5 +1,5 @@
 from ..utils import (define_filters, get_cenwave, quick_cenwave_zeropoint,
-                     check_filters, plot_colors, read_phot, calc_flux_lum)
+                     check_filters, plot_colors, get_lc, calc_flux_lum)
 from astropy.table import Table
 import os
 import pytest
@@ -128,9 +128,9 @@ def test_plot_colors_unknown_band():
     assert plot_colors('potato') == 'k'
 
 
-def test_read_phot(mocker):
+def test_get_lc(mocker):
     # Call the function with a test object name
-    phot = read_phot('2018lfe')
+    phot = get_lc('2018lfe')
 
     # Check that the returned table is correct
     assert isinstance(phot, Table)

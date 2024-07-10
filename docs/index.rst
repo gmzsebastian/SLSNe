@@ -22,6 +22,7 @@ For examples on how to access the data see the Tutorials menu.
    tutorials/kcorrect
    tutorials/bolometric
    tutorials/parameters
+   tutorials/mosfit
 
 License & Attribution
 ---------------------

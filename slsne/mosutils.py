@@ -219,7 +219,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
 
     # Add derived parameters
     if plot_derived:
-        derived = ['A_V', 'MJD0', 'kenergy', 'mnickel', 'TSD', 'L0']
+        if 'fnickel' in chain_names:
+            derived = ['A_V', 'MJD0', 'kenergy', 'mnickel', 'TSD', 'L0']
+        else:
+            derived = ['A_V', 'MJD0', 'kenergy', 'TSD', 'L0']
         chain_names = np.append(chain_names, derived)
 
         # Get MJD of first datapoint
@@ -256,7 +259,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
                         'max_value': 1.0e10}
 
         nhhost_index = np.where(chain_names == 'nhhost')[0][0]
-        fnickel_index = np.where(chain_names == 'fnickel')[0][0]
+        if 'fnickel' in chain_names:
+            fnickel_index = np.where(chain_names == 'fnickel')[0][0]
+        else:
+            fnickel_index = None
         mejecta_index = np.where(chain_names == 'mejecta')[0][0]
         vejecta_index = np.where(chain_names == 'vejecta')[0][0]
         texplosion_index = np.where(chain_names == 'texplosion')[0][0]
@@ -940,7 +946,10 @@ def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True):
         kappa = param['kappa']
         log_kappa_gamma = np.log10(param['kappagamma'])
         mejecta = param['mejecta']
-        fnickel = param['fnickel']
+        if 'fnickel' in param.colnames:
+            fnickel = param['fnickel']
+        else:
+            fnickel = 0.0
         v_ejecta = param['vejecta']
         temperature = param['temperature']
         cut_wave = param['cutoff_wavelength']

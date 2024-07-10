@@ -199,6 +199,7 @@ def get_all_lcs(band, names=None, data_table=data_table, include_bronze=False, s
         # Import rest-frame data
         rest = table.Table.read(os.path.join(data_dir, 'supernovae', object_name,
                                              f'{object_name}_rest.txt'), format='ascii')
+        rest = rest[np.isfinite(rest['Mean'])]
 
         # Get requested filter from data
         rest = rest[rest['Filter'] == band]
@@ -208,14 +209,11 @@ def get_all_lcs(band, names=None, data_table=data_table, include_bronze=False, s
             continue
 
         # Calculate the rest-frame phase
-        rest['Phase'] = (rest['MJD'] - peak) / (1 + redshift)
-        # Shift the light curve to have the peak at phase 0 in the requested band
         if shift_to_peak:
-            offset = rest['Phase'][rest['Mean'].argmin()]
-            rest['Phase'] = rest['Phase'] - offset
+            rest['Phase'] = (rest['MJD'] - peak) / (1 + redshift)
 
         # Interpolate the light curve to the requested time samples
-        mean = interpolate_1D(rest['Phase'], rest['Mean'], samples)
+        mean = interpolate_1D(rest['Phase'], rest['Mean'], samples, 99.0, np.nan)
 
         # Append the interpolated light curve to the array of light curves.
         if ('mean_array' not in locals()) or (i == 0):
@@ -562,43 +560,3 @@ def get_bolcorr(phot, redshift, peak, remove_ignore=True):
 
     # Return the bolometric scaling
     return bol_scaling
-
-
-def get_lc(object_name, lc_type='phot'):
-    """
-    Get the light curve of a supernova from the reference data directory.
-
-    Parameters
-    ----------
-    object_name : str
-        Name of the supernova to get the light curve from.
-    lc_type : str, default 'phot'
-        Type of light curve to get. Can be 'phot', 'model',
-        'bol' or 'rest'.
-        'phot' - Observed photometry of the SN.
-        'model' - MOSFiT light curve model of the photometry.
-        'bol' - Bolometric parameters of the SN.
-        'rest' - Rest-frame MOSFiT light curve model.
-    Returns
-    -------
-    lc : astropy.table.table.Table
-        Light curve of the supernova.
-    """
-
-    # Import light curve data
-    if lc_type == 'phot':
-        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
-                                           object_name, f'{object_name}.txt'), format='ascii')
-    elif lc_type == 'model':
-        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
-                                           object_name, f'{object_name}_model.txt'), format='ascii')
-    elif lc_type == 'rest':
-        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
-                                           object_name, f'{object_name}_rest.txt'), format='ascii')
-    elif lc_type == 'bol':
-        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
-                                           object_name, f'{object_name}_bol.txt'), format='ascii')
-    else:
-        raise ValueError(f'lc_type {lc_type} must be phot, model, bol, or rest.')
-
-    return lc

@@ -394,6 +394,46 @@ def plot_colors(band):
     return band_color_map.get(band, 'k')
 
 
+def get_lc(object_name, lc_type='phot'):
+    """
+    Get the light curve of a supernova from the reference data directory.
+
+    Parameters
+    ----------
+    object_name : str
+        Name of the supernova to get the light curve from.
+    lc_type : str, default 'phot'
+        Type of light curve to get. Can be 'phot', 'model',
+        'bol' or 'rest'.
+        'phot' - Observed photometry of the SN.
+        'model' - MOSFiT light curve model of the photometry.
+        'bol' - Bolometric parameters of the SN.
+        'rest' - Rest-frame MOSFiT light curve model.
+    Returns
+    -------
+    lc : astropy.table.table.Table
+        Light curve of the supernova.
+    """
+
+    # Import light curve data
+    if lc_type == 'phot':
+        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                           object_name, f'{object_name}.txt'), format='ascii')
+    elif lc_type == 'model':
+        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                           object_name, f'{object_name}_model.txt'), format='ascii')
+    elif lc_type == 'rest':
+        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                           object_name, f'{object_name}_rest.txt'), format='ascii')
+    elif lc_type == 'bol':
+        lc = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                           object_name, f'{object_name}_bol.txt'), format='ascii')
+    else:
+        raise ValueError(f'lc_type {lc_type} must be phot, model, bol, or rest.')
+
+    return lc
+
+
 def calc_DL(redshift):
     """
     Calculate the luminosity distance in pc for a given redshift.
@@ -429,44 +469,6 @@ def calc_DM(redshift):
     DL = calc_DL(redshift)
     DM = 5 * np.log10(DL / 10)
     return DM
-
-
-def read_phot(object_name):
-    """
-    Read in a photometry file for a given SLSN from the
-    reference database.
-
-    Parameters
-    ----------
-    object_name : str
-        Name of the supernova.
-
-    Returns
-    -------
-    phot : astropy.table.Table
-        Table with photometry data
-    """
-    phot = table.Table.read(os.path.join(data_dir, 'supernovae', object_name, f'{object_name}.txt'), format='ascii')
-    return phot
-
-
-def read_bolo(object_name):
-    """
-    Get the bolometric parameters of a supernova.
-
-    Parameters
-    ----------
-    object_name : str
-        Name of the supernova.
-
-    Returns
-    -------
-    bolo : astropy.table.Table
-        Table with the bolometric luminosity,
-        radius, and temperature.
-    """
-    bolo = table.Table.read(os.path.join(data_dir, 'supernovae', object_name, f'{object_name}_bol.txt'), format='ascii')
-    return bolo
 
 
 def calc_flux_lum(phot, redshift):
@@ -535,7 +537,7 @@ def create_json(object_name, output_dir, default_err=0.1):
     """
 
     # Get photometry table
-    phot = read_phot(object_name)
+    phot = get_lc(object_name)
 
     # Rename columns into MOSFiT format
     use = phot['Ignore'] == 'False'
@@ -611,3 +613,217 @@ def calc_percentile(samples):
     values = np.percentile(samples, [15.87, 50, 84.13])
     output = values[1], values[2] - values[1], values[1] - values[0]
     return output
+
+
+def get_params(object_name=None, param_names=None, local_dir=None):
+    """
+    Get the parameters of a supernova from the reference database.
+
+    Parameters
+    ----------
+    object_name : str, default None
+        Name of the supernova to get the light curve from.
+        If None, all parameters will be returned
+    param_names : list, optional
+        List of parameter names to get from the reference table.
+    local_dir : bool, default False
+        If True, the parameters will be read from the local
+        directory.
+
+    Returns
+    -------
+    params : astropy.table.Table
+        Table with the parameters of the supernova.
+    """
+
+    # Make sure param_names is a list
+    if type(param_names) is str:
+        param_names = [param_names]
+
+    # Import light curve data
+    if object_name is None:
+        params = table.Table.read(os.path.join(data_dir, 'all_parameters.txt'), format='ascii')
+
+        # Get requested parameters
+        if param_names is not None:
+            format_names = [f"{param}_{suffix}" for param in param_names for suffix in ['med', 'up', 'lo']]
+            params = params[format_names]
+
+        return params
+    else:
+        if local_dir is None:
+            params = table.Table.read(os.path.join(data_dir, 'supernovae',
+                                                   object_name, f'{object_name}_params.txt'), format='ascii')
+        else:
+            params = table.Table.read(os.path.join(local_dir,
+                                                   object_name, 'jupyter', 'output_parameters.txt'), format='ascii')
+        return params
+
+
+def create_parameters(output_dir=None, use_names=None, local_dir=None):
+    """
+    This function creates a table with the parameters of all
+    the SLSNe in the reference database.
+
+    Parameters
+    ----------
+    output_dir : str, default None
+        Name of the directory where the output table will
+        be saved. If None, the table will not be saved.
+    use_names : np.array, default None
+        List with the names of the SLSNe to be used.
+        If None, all SLSNe will be used.
+    local_dir : str, default None
+        Name of the directory where the parameters are stored.
+        If None, the parameters will be read from the reference
+        database.
+
+    Returns
+    -------
+    output : astropy.table.Table
+        Table with the parameters of all the SLSNe.
+    """
+
+    # Get data table and supernovae names
+    data_table = get_data_table()
+    if use_names is None:
+        use_names = get_use_names()
+
+    # Get parameter names from a default object
+    params = get_params(use_names[0], local_dir=local_dir)
+    colnames = np.array(params.colnames)
+    colnames[colnames == 'kenergy'] = 'log(kenergy)'
+    colnames[colnames == 'TSD'] = 'log(TSD)'
+    use_columns = ['redshift'] + list(colnames) + ['1frac', 'efficiency']
+    colnames = ['name'] + [item for sublist in [[f'{i}_lo', f'{i}_med', f'{i}_up']
+                                                for i in use_columns] for item in sublist]
+
+    # Create output table
+    data = np.zeros((len(use_names), len(colnames)))
+    output = table.Table(data=data, names=colnames)
+
+    # Make the first column the names for use_names
+    output['name'] = use_names
+
+    for i in range(len(use_names)):
+        object_name = use_names[i]
+        print(i + 1, '/', len(use_names), object_name)
+
+        # Read parameter file
+        params = get_params(object_name, local_dir=local_dir)
+
+        # Find the corresponding object in data_table
+        match = data_table['Name'] == object_name
+        redshift = data_table['Redshift'][match][0]
+        output[i]['redshift_med'] = redshift
+
+        for column in params.colnames:
+            # Calculate mean and 1-sigma errors
+            if column == 'kenergy':
+                med, up, lo = calc_percentile(np.log10(1.0e51 * params[column]))
+                output[i]['log(kenergy)_lo'] = lo
+                output[i]['log(kenergy)_med'] = med
+                output[i]['log(kenergy)_up'] = up
+            elif column == 'TSD':
+                med, up, lo = calc_percentile(np.log10(params[column]))
+                output[i]['log(TSD)_lo'] = lo
+                output[i]['log(TSD)_med'] = med
+                output[i]['log(TSD)_up'] = up
+            else:
+                med, up, lo = calc_percentile(params[column])
+                output[i][f'{column}_lo'] = lo
+                output[i][f'{column}_med'] = med
+                output[i][f'{column}_up'] = up
+
+        # Calculate 1 - frac
+        frac1 = 1 - params['frac']
+        med, up, lo = calc_percentile(frac1)
+        output[i]['1frac_lo'] = lo
+        output[i]['1frac_med'] = med
+        output[i]['1frac_up'] = up
+
+        # Calculate efficiency
+        E_rad = 10 ** params['log(E_rad)']
+        E_kin = 1.0e51 * params['kenergy']
+        efficiency = E_rad / E_kin
+        med, up, lo = calc_percentile(efficiency)
+        output[i]['efficiency_lo'] = lo
+        output[i]['efficiency_med'] = med
+        output[i]['efficiency_up'] = up
+
+    # Return output
+    if output_dir is not None:
+        # Round off all columns to 5 decimal places, except the first column
+        for column in output.colnames[1:]:
+            output[column] = np.round(output[column], 5)
+        output.write(os.path.join(output_dir, 'all_parameters.txt'), format='ascii.fixed_width',
+                     delimiter=None, overwrite=True)
+    else:
+        return output
+
+
+def get_references(object_names=None):
+    """
+    Print out the ADS bibcodes for the references used for either all
+    the SLSNe in the reference database or a specific list of SLSNe.
+
+    Parameters
+    ----------
+    object_names : np.array, default None
+        List with the names of the SLSNe to get the references from.
+        If None, all SLSNe will be used.
+
+    Returns
+    -------
+    Nothing, it just prints out the references.
+    """
+
+    # Map of references
+    cite_map = {'CPCS': '2019CoSka..49..125Z',
+                'Gaia': '2016pas..conf...65W',
+                'MDS': '2020ApJ...905...94V',
+                'ThisWork': '2024...............',
+                'ZTF': '2019PASP..131a8002B'}
+
+    # Open Bibtex file
+    bibtex_file_path = os.path.join(data_dir, 'references.bib')
+    with open(bibtex_file_path, 'r') as file:
+        bibtex_content = file.read()
+
+    if object_names is None:
+        object_names = get_use_names()
+
+    # Make sure object_names is a list
+    if type(object_names) is str:
+        object_names = [object_names]
+
+    # Get all the bibcodes for all objects in object_names
+    bibcodes = np.array([])
+    for object_name in object_names:
+        source = get_lc(object_name)['Source']
+        bibcodes = np.append(bibcodes, source)
+
+    # Replace values in cite_map with their bibcodes
+    for key in cite_map.keys():
+        bibcodes[bibcodes == key] = cite_map[key]
+
+    # Unique bibcodes
+    bibcodes = np.unique(bibcodes)
+    used_codes = []
+
+    # Print out the references
+    for bibcode in bibcodes:
+        # Regex to find the entry with the given bibcode
+        pattern = re.compile(
+            r'@(ARTICLE|INPROCEEDINGS|PHDTHESIS){' + re.escape(bibcode) + r',.*?^}',
+            re.DOTALL | re.MULTILINE
+        )
+        match = pattern.search(bibtex_content)
+
+        if match:
+            print(match.group(0), '\n')
+            used_codes.append(bibcode)
+
+    # Print out the bibcodes that were used
+    print('Bibcodes used in this work:')
+    print("\\citep{%s}" % (', '.join(np.sort(used_codes))))
