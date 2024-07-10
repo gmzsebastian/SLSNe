@@ -1,2 +1,6 @@
 numpy
 matplotlib
+myst_nb
+sphinx-astropy
+sphinx
+sphinx_rtd_theme
