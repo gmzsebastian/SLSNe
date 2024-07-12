@@ -22,6 +22,13 @@ data_dir = os.path.join(current_file_dir, 'ref_data')
 cb_g = [0.288921, 0.758394, 0.428426, 1.]
 cb_r = [0.862745, 0.078431, 0.235294, 1.]
 
+# Map of references
+cite_map = {'CPCS': '2019CoSka..49..125Z',
+            'Gaia': '2016pas..conf...65W',
+            'MDS': '2020ApJ...905...94V',
+            'ThisWork': '2024arXiv240707946G',
+            'ZTF': '2019PASP..131a8002B'}
+
 
 def get_data_table(data_dir=data_dir):
     """
@@ -777,13 +784,6 @@ def get_references(object_names=None):
     -------
     Nothing, it just prints out the references.
     """
-
-    # Map of references
-    cite_map = {'CPCS': '2019CoSka..49..125Z',
-                'Gaia': '2016pas..conf...65W',
-                'MDS': '2020ApJ...905...94V',
-                'ThisWork': '2024...............',
-                'ZTF': '2019PASP..131a8002B'}
 
     # Open Bibtex file
     bibtex_file_path = os.path.join(data_dir, 'references.bib')

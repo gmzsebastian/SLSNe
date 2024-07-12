@@ -12,7 +12,8 @@ from astropy import table
 from scipy import interpolate
 import glob
 from scipy.optimize import minimize
-from .utils import quick_cenwave_zeropoint, calc_DM, get_cenwave
+from .utils import (quick_cenwave_zeropoint, calc_DM, get_cenwave, get_use_names,
+                    get_data_table, get_lc, cite_map)
 
 # Get directory with reference data
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
@@ -560,3 +561,44 @@ def get_bolcorr(phot, redshift, peak, remove_ignore=True):
 
     # Return the bolometric scaling
     return bol_scaling
+
+
+def get_all_phot(use_names=None, include_bronze=True):
+    """
+    Get all the photometry of the supernovae in the use_names list.
+
+    Parameters
+    ----------
+    use_names : list
+        List of names of the supernovae to get the photometry from.
+    include_bronze : bool, default False
+        If True, include the bronze quality supernovae.
+
+    Returns
+    -------
+    photometry : astropy.table.table.Table
+        Table with all the photometry of the supernovae.
+    """
+
+    # Import use_names
+    if use_names is None:
+        use_names = get_use_names()
+
+    # Remove Bronze objects by default
+    if not include_bronze:
+        data_table = get_data_table()
+        use_names = list(data_table['Name'][data_table['Quality'] != 'Bronze'])
+
+    # For each object, get the astropy table of photometry using get_lc
+    # Then append it to a large table
+    photometry = get_lc(use_names[0])
+    for i in range(1, len(use_names)):
+        print(i + 1, '/', len(use_names), '-', use_names[i])
+        photometry = table.vstack([photometry, get_lc(use_names[i])])
+
+    # Replace the values of the `Source` column with the corresponding bibcodes
+    # from cite_map
+    for key in cite_map.keys():
+        photometry['Source'][photometry['Source'] == key] = cite_map[key]
+
+    return photometry
