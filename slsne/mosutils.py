@@ -10,9 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import json
 import os
-from .utils import calc_percentile, quick_cenwave_zeropoint, plot_colors, get_data_table, get_cenwave
+from .utils import calc_percentile, quick_cenwave_zeropoint, plot_colors, get_data_table, get_cenwave, get_lc
 from astropy import units as u
-from .lcurve import get_lc
 from .models import slsnni, nickelcobalt, magnetar
 from astropy import table
 import scipy.integrate as itg
@@ -269,6 +268,8 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
         pspin_index = np.where(chain_names == 'Pspin')[0][0]
         bfield_index = np.where(chain_names == 'Bfield')[0][0]
         Mns_index = np.where(chain_names == 'Mns')[0][0]
+    else:
+        derived = []
 
     for i in range(len(chain_names)):
         param = chain_names[i]

@@ -592,9 +592,15 @@ def get_all_phot(use_names=None, include_bronze=True):
     # For each object, get the astropy table of photometry using get_lc
     # Then append it to a large table
     photometry = get_lc(use_names[0])
+    photometry['Name'] = [use_names[0]] * len(photometry)
     for i in range(1, len(use_names)):
-        print(i + 1, '/', len(use_names), '-', use_names[i])
-        photometry = table.vstack([photometry, get_lc(use_names[i])])
+        object_name = use_names[i]
+        print(i + 1, '/', len(use_names), '-', object_name)
+        # Get data
+        data = get_lc(object_name)
+        # Append Name column at the begining with object_name
+        data['Name'] = [object_name] * len(data)
+        photometry = table.vstack([photometry, data])
 
     # Replace the values of the `Source` column with the corresponding bibcodes
     # from cite_map

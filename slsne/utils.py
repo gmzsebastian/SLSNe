@@ -807,6 +807,9 @@ def get_references(object_names=None):
     for key in cite_map.keys():
         bibcodes[bibcodes == key] = cite_map[key]
 
+    # Append Gomez et al. 2024 paper
+    bibcodes = np.append(bibcodes, '2024arXiv240707946G')
+
     # Unique bibcodes
     bibcodes = np.unique(bibcodes)
     used_codes = []
