@@ -661,6 +661,15 @@ def get_params(object_name=None, param_names=None, local_dir=None):
         if local_dir is None:
             params = table.Table.read(os.path.join(data_dir, 'supernovae',
                                                    object_name, f'{object_name}_params.txt'), format='ascii')
+            # Read reference data from sne_data file
+            data_table = get_data_table()
+            ref_data = data_table[data_table['Name'] == object_name]
+
+            # Append ref_data to the params table metadata
+            # For all keys in ref_data
+            for key in ref_data.keys():
+                params.meta[key] = ref_data[key][0]
+
         else:
             params = table.Table.read(os.path.join(local_dir,
                                                    object_name, 'jupyter', 'output_parameters.txt'), format='ascii')
