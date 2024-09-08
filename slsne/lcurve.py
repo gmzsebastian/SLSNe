@@ -12,7 +12,8 @@ from astropy import table
 from scipy import interpolate
 import glob
 from scipy.optimize import minimize
-from .utils import quick_cenwave_zeropoint, calc_DM, get_cenwave
+from .utils import (quick_cenwave_zeropoint, calc_DM, get_cenwave, get_use_names,
+                    get_data_table, get_lc, cite_map)
 
 # Get directory with reference data
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
@@ -121,10 +122,12 @@ def interpolate_2D(time, wavelength, flux, out_wave=None, out_phase=None):
     return new_flux
 
 
-def get_all_lcs(band, names=None, data_table=data_table, include_bronze=False, shift_to_peak=True,
-                min_time=-70, max_time=300, time_samples=300, sigma=1, return_individual=True):
+def get_all_lcs(band, names=None, include_bronze=False, shift_to_peak=True, min_time=-70,
+                max_time=300, time_samples=300, sigma=1, return_individual=True):
     """
     Get the light curves of supernovae from the reference data directory.
+    data_table should be automatically defined in the global scope in the lcurve
+    module.
 
     Parameters
     ----------
@@ -133,8 +136,6 @@ def get_all_lcs(band, names=None, data_table=data_table, include_bronze=False, s
     names : list, default None
         List of names of the supernovae to get the light curves from.
         If None, all the supernovae in the reference data directory will be used.
-    data_table : astropy.table.table.Table
-        Table with the supernova data.
     incldue_bronze : bool, default False
         If True, include the bronze quality supernovae.
     shift_to_peak : bool, default True
@@ -551,7 +552,7 @@ def get_bolcorr(phot, redshift, peak, remove_ignore=True):
     # Get filter wavelengths, zeropoints, and phase
     phot['cenwave'], phot['zeropoint'] = quick_cenwave_zeropoint(phot)
     phase0 = peak
-    phot['phase'] = (phot['MJD'] - phase0) / (1 + redshift)
+    phot['Phase'] = (phot['MJD'] - phase0) / (1 + redshift)
 
     # Calculate the bolometric scaling
     use_phase = np.array(phot['Phase'])
@@ -560,3 +561,127 @@ def get_bolcorr(phot, redshift, peak, remove_ignore=True):
 
     # Return the bolometric scaling
     return bol_scaling
+
+
+def get_all_phot(use_names=None, include_bronze=True):
+    """
+    Get all the photometry of the supernovae in the use_names list.
+
+    Parameters
+    ----------
+    use_names : list
+        List of names of the supernovae to get the photometry from.
+    include_bronze : bool, default False
+        If True, include the bronze quality supernovae.
+
+    Returns
+    -------
+    photometry : astropy.table.table.Table
+        Table with all the photometry of the supernovae.
+    """
+
+    # Import use_names
+    if use_names is None:
+        use_names = get_use_names()
+
+    # Remove Bronze objects by default
+    if not include_bronze:
+        data_table = get_data_table()
+        use_names = list(data_table['Name'][data_table['Quality'] != 'Bronze'])
+
+    # For each object, get the astropy table of photometry using get_lc
+    # Then append it to a large table
+    photometry = get_lc(use_names[0])
+    photometry['Name'] = [use_names[0]] * len(photometry)
+    for i in range(1, len(use_names)):
+        object_name = use_names[i]
+        print(i + 1, '/', len(use_names), '-', object_name)
+        # Get data
+        data = get_lc(object_name)
+        # Append Name column at the begining with object_name
+        data['Name'] = [object_name] * len(data)
+        photometry = table.vstack([photometry, data])
+
+    # Replace the values of the `Source` column with the corresponding bibcodes
+    # from cite_map
+    for key in cite_map.keys():
+        photometry['Source'][photometry['Source'] == key] = cite_map[key]
+
+    return photometry
+
+
+def get_evolution(names=None, min_phase=-85, max_phase=250, phase_samples=100):
+    """
+    Get the bolumetric evolution curves for the radius, temperature,
+    and luminosity of the supernovae.
+
+    Parameters
+    ----------
+    names : list, default None
+        List of names of the supernovae to get the evolution curves from.
+        If None, all the supernovae in the reference data directory will be used.
+    min_phase : float, default -85
+        Minimum phase to interpolate the evolution curves to.
+    max_phase : float, default 250
+        Maximum phase to interpolate the evolution curves to.
+    phase_samples : int, default 100
+        Number of samples to interpolate the evolution curves to.
+
+    Returns
+    -------
+    samples : array
+        Array of phases to interpolate the evolution curves to.
+    interp_lum_array : array
+        Array of interpolated bolometric luminosity evolution curves.
+    interp_temp_array : array
+        Array of interpolated temperature evolution curves.
+    interp_radius_array : array
+        Array of interpolated radius evolution curves.
+    """
+
+    # Get the names of the supernovae in the extrabol directory
+    extrabol_dirs = glob.glob(os.path.join(data_dir, 'extrabol', '*'))
+    extrabol_names = [i.split('/')[-1][:-4] for i in extrabol_dirs]
+
+    # If names is not None, make sure all the names are in the extrabol_names
+    if names is not None:
+        # Make sure names is an array
+        if isinstance(names, str):
+            names = [names]
+
+        missing_names = [i for i in names if i not in extrabol_names]
+        print("Missing names:", missing_names)
+        if missing_names:
+            raise ValueError('All supernovae in `names` must be in the extrabol directory.')
+        extrabol_names = names
+
+    # Create empty arrays
+    samples = np.linspace(min_phase, max_phase, phase_samples)
+    interp_lum_array = np.nan * np.ones(len(samples))
+    interp_temp_array = np.nan * np.ones(len(samples))
+    interp_radius_array = np.nan * np.ones(len(samples))
+
+    for i in range(len(extrabol_names)):
+        object_name = extrabol_names[i]
+        print(i + 1, '/', len(extrabol_names), object_name)
+
+        # Import data
+        data = table.Table.read(os.path.join(data_dir, 'extrabol', f'{object_name}.txt'), format='ascii')
+
+        # Extract parameters
+        time = data['Time (MJD)'][1:]
+        temp = data['Temp./1e3 (K)'][1:]
+        radius = data['Radius/1e15 (cm)'][1:]
+        lum = data['Log10(Bol. Lum)'][1:]
+
+        # Interpolate the evolution curves to the requested time samples
+        interp_lum = interpolate_1D(time, lum, samples)
+        interp_temp = interpolate_1D(time, temp, samples)
+        interp_radius = interpolate_1D(time, radius, samples)
+
+        # Append the interpolated evolution curves to the arrays
+        interp_lum_array = np.vstack([interp_lum_array, interp_lum])
+        interp_temp_array = np.vstack([interp_temp_array, interp_temp])
+        interp_radius_array = np.vstack([interp_radius_array, interp_radius])
+
+    return samples, interp_lum_array, interp_temp_array, interp_radius_array

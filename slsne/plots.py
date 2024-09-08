@@ -60,7 +60,7 @@ param_dict = {'redshift': [0.0, 2.2, False, r'$z$'],
 
 def make_plot(param_x, param_y, param_z=None, output_dir='.', remove_bronze=True, plot_tmag=False,
               plot_menergy=False, plot_fnickel=False, plot_mean=False, plot_1_1=False,
-              include_frac=False, include_others=False):
+              include_frac=False, include_others=False, individual_name=None):
     """
     This function creates a correlation plot between two parameters.
 
@@ -92,6 +92,8 @@ def make_plot(param_x, param_y, param_z=None, output_dir='.', remove_bronze=True
         of magnetar energy.
     include_others : bool, default=False
         Whether to include markers for comparsions to other works.
+    individual_name : str, default=None
+        The name of the individual object to be plotted.
     """
 
     # Import parameters data
@@ -190,6 +192,19 @@ def make_plot(param_x, param_y, param_z=None, output_dir='.', remove_bronze=True
                      xerr=[xparam_lo[red], xparam_up[red]],
                      yerr=[yparam_lo[red], yparam_up[red]], fmt='o',
                      color=cb_r, markersize=10, alpha=alpha, markeredgecolor='k', zorder=1000)
+
+    # Plot individual objects
+    if individual_name is not None:
+        if individual_name not in params['name']:
+            raise ValueError(f'{individual_name} is not a valid name.')
+
+        # Get the index of the individual object
+        ind = np.where(params['name'] == individual_name)[0][0]
+
+        # Plot the individual object
+        ax1.errorbar(xparam_med[ind], yparam_med[ind], xerr=[[xparam_lo[ind]], [xparam_up[ind]]],
+                     yerr=[[yparam_lo[ind]], [yparam_up[ind]]], fmt='o', color='b', markersize=10, alpha=0.9,
+                     markeredgecolor='k', zorder=2000)
 
     # Plot the data for comparisons to other works
     if include_others:
@@ -427,6 +442,10 @@ def make_plot(param_x, param_y, param_z=None, output_dir='.', remove_bronze=True
                      label='Aguilera-Dena 2020')
         ax4.errorbar([], [], fmt='o', color=cb_r, markersize=10, alpha=1.0, markeredgecolor='k',
                      label='GRB SNe (Kumar 2024)')
+        ax4.legend(loc='best', fontsize=11, frameon=False)
+    if individual_name is not None:
+        ax4.errorbar([], [], fmt='o', color='b', markersize=10, alpha=1.0, markeredgecolor='k',
+                     label=individual_name)
         ax4.legend(loc='best', fontsize=11, frameon=False)
 
     # Clear the upper corner

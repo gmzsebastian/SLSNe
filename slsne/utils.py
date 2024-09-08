@@ -22,6 +22,13 @@ data_dir = os.path.join(current_file_dir, 'ref_data')
 cb_g = [0.288921, 0.758394, 0.428426, 1.]
 cb_r = [0.862745, 0.078431, 0.235294, 1.]
 
+# Map of references
+cite_map = {'CPCS': '2019CoSka..49..125Z',
+            'Gaia': '2016pas..conf...65W',
+            'MDS': '2020ApJ...905...94V',
+            'ThisWork': '2024arXiv240707946G',
+            'ZTF': '2019PASP..131a8002B'}
+
 
 def get_data_table(data_dir=data_dir):
     """
@@ -471,7 +478,7 @@ def calc_DM(redshift):
     return DM
 
 
-def calc_flux_lum(phot, redshift):
+def calc_flux_lum(phot, redshift, return_lambda=False):
     """
     Calculate F_lambda and L_lambda for a photometry file,
     given a redshift.
@@ -482,6 +489,9 @@ def calc_flux_lum(phot, redshift):
         Table with photometry data
     redshift : float
         Redshift of the object
+    return_lambda : bool, default False
+        If True, return the wavelength of the filter
+        in angstroms.
 
     Returns
     -------
@@ -489,6 +499,8 @@ def calc_flux_lum(phot, redshift):
         Array of flux values in erg/s/cm^2/A
     L_lambda : array
         Array of luminosity values in erg/s/A
+    lambda_AA : array, optional
+        Array of central wavelengths in angstroms.
     """
 
     # If 'zeropoint' or 'cenwave' not in phot, calculate them using quick_cenwave_zeropoint
@@ -513,7 +525,11 @@ def calc_flux_lum(phot, redshift):
     # Calculate luminosity
     L_lambda = F_lambda * 4 * np.pi * DL.to(u.cm) ** 2 * (1 + redshift)
 
-    return F_lambda, L_lambda
+    if return_lambda:
+        lambda_AA = np.array(phot['cenwave']) * u.AA
+        return F_lambda, L_lambda, lambda_AA
+    else:
+        return F_lambda, L_lambda
 
 
 def create_json(object_name, output_dir, default_err=0.1):
@@ -654,6 +670,15 @@ def get_params(object_name=None, param_names=None, local_dir=None):
         if local_dir is None:
             params = table.Table.read(os.path.join(data_dir, 'supernovae',
                                                    object_name, f'{object_name}_params.txt'), format='ascii')
+            # Read reference data from sne_data file
+            data_table = get_data_table()
+            ref_data = data_table[data_table['Name'] == object_name]
+
+            # Append ref_data to the params table metadata
+            # For all keys in ref_data
+            for key in ref_data.keys():
+                params.meta[key] = ref_data[key][0]
+
         else:
             params = table.Table.read(os.path.join(local_dir,
                                                    object_name, 'jupyter', 'output_parameters.txt'), format='ascii')
@@ -778,13 +803,6 @@ def get_references(object_names=None):
     Nothing, it just prints out the references.
     """
 
-    # Map of references
-    cite_map = {'CPCS': '2019CoSka..49..125Z',
-                'Gaia': '2016pas..conf...65W',
-                'MDS': '2020ApJ...905...94V',
-                'ThisWork': '2024...............',
-                'ZTF': '2019PASP..131a8002B'}
-
     # Open Bibtex file
     bibtex_file_path = os.path.join(data_dir, 'references.bib')
     with open(bibtex_file_path, 'r') as file:
@@ -806,6 +824,9 @@ def get_references(object_names=None):
     # Replace values in cite_map with their bibcodes
     for key in cite_map.keys():
         bibcodes[bibcodes == key] = cite_map[key]
+
+    # Append Gomez et al. 2024 paper
+    bibcodes = np.append(bibcodes, '2024arXiv240707946G')
 
     # Unique bibcodes
     bibcodes = np.unique(bibcodes)

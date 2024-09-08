@@ -112,8 +112,8 @@
  59694.246093  19.8548  19.9114   0.049       FLWO   KeplerCam       r  False      AB   False             ThisWork 
      59694.25  19.9015   19.958  0.0551       FLWO   KeplerCam       r  False      AB   False             ThisWork 
      59694.25  20.1898  20.2322  0.1371       FLWO   KeplerCam       i  False      AB   False             ThisWork 
- 59694.253906  20.1428  20.1852  0.1225       FLWO   KeplerCam       i  False      AB   False             ThisWork 
  59694.253906  20.1341  20.2133  0.1632        P48         ZTF       g  False      AB   False             ThisWork 
+ 59694.253906  20.1428  20.1852  0.1225       FLWO   KeplerCam       i  False      AB   False             ThisWork 
  59694.257812  20.1898  20.2322  0.1217       FLWO   KeplerCam       i  False      AB   False             ThisWork 
   59694.35769  19.5326  19.5834    -1.0      ATLAS       ATLAS  orange   True      AB    True  2018PASP..130f4505T 
  59695.106524  19.3565  19.4074    -1.0      ATLAS       ATLAS  orange   True      AB    True  2018PASP..130f4505T 

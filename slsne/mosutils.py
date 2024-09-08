@@ -10,9 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import json
 import os
-from .utils import calc_percentile, quick_cenwave_zeropoint, plot_colors, get_data_table, get_cenwave
+from .utils import calc_percentile, quick_cenwave_zeropoint, plot_colors, get_data_table, get_cenwave, get_lc
 from astropy import units as u
-from .lcurve import get_lc
 from .models import slsnni, nickelcobalt, magnetar
 from astropy import table
 import scipy.integrate as itg
@@ -171,7 +170,7 @@ def plot_trace(param_chain, param_values, param_values_log, min_val, max_val,
 
 def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
                 exclude=['efficiency', 'lphoto', 'variance'], plot_derived=True,
-                append_derived=False, burn_in=0.9, reference_band='r'):
+                append_derived=False, burn_in=0.9, reference_band='r', is_slsn=True):
     '''
     This function plots the trace of all parameters in the chain, and
     optionally the corner plot. The all_chain, chain_names, and data
@@ -199,6 +198,8 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
         The fraction of steps to burn in.
     reference_band : str, default 'r'
         The reference band to use for peak calculations.
+    is_slsn : bool, default True
+        Is the object being processed a SLSN?
     '''
     # Number of walkers
     n_steps = all_chain.shape[1]
@@ -269,6 +270,8 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
         pspin_index = np.where(chain_names == 'Pspin')[0][0]
         bfield_index = np.where(chain_names == 'Bfield')[0][0]
         Mns_index = np.where(chain_names == 'Mns')[0][0]
+    else:
+        derived = []
 
     for i in range(len(chain_names)):
         param = chain_names[i]
@@ -276,7 +279,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
             print('Plotting ' + param)
 
             # Extract Name and Log
-            param_latex = setup[param]['latex']
+            if 'latex' in setup[param]:
+                param_latex = setup[param]['latex']
+            else:
+                param_latex = param
             if 'log' in setup[param]:
                 param_log = setup[param]['log']
             else:
@@ -421,27 +427,28 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
         np.savetxt(day_dir, bright_phase)
 
     # Save output parameters
-    output_parameters[output_names == 'Bfield'] = np.log10(output_parameters[output_names == 'Bfield'])
-    output_parameters[output_names == 'nhhost'] = np.log10(output_parameters[output_names == 'nhhost'])
-    output_parameters[output_names == 'KE'] = np.log10(output_parameters[output_names == 'KE'])
+    if is_slsn:
+        output_parameters[output_names == 'Bfield'] = np.log10(output_parameters[output_names == 'Bfield'])
+        output_parameters[output_names == 'nhhost'] = np.log10(output_parameters[output_names == 'nhhost'])
+        output_parameters[output_names == 'KE'] = np.log10(output_parameters[output_names == 'KE'])
 
-    # And modify their names
-    output_names[output_names == 'Bfield'] = 'log(Bfield)'
-    output_names[output_names == 'nhhost'] = 'log(nhhost)'
-    output_names[output_names == 'KE'] = 'log(KE)'
-    output_names[output_names == 'L0'] = 'log(L0)'
+        # And modify their names
+        output_names[output_names == 'Bfield'] = 'log(Bfield)'
+        output_names[output_names == 'nhhost'] = 'log(nhhost)'
+        output_names[output_names == 'KE'] = 'log(KE)'
+        output_names[output_names == 'L0'] = 'log(L0)'
 
-    # Append light curve parameters
-    output_parameters = np.vstack([output_parameters, brightest_mag])
-    output_names = np.append(output_names, 'Peak_mag')
-    output_parameters = np.vstack([output_parameters, brightest_day])
-    output_names = np.append(output_names, 'Peak_MJD')
+        # Append light curve parameters
+        output_parameters = np.vstack([output_parameters, brightest_mag])
+        output_names = np.append(output_names, 'Peak_mag')
+        output_parameters = np.vstack([output_parameters, brightest_day])
+        output_names = np.append(output_names, 'Peak_MJD')
 
-    # Write final data
-    final_data = np.round(output_parameters.T, 5)
-    output_table = table.Table(final_data, names=output_names)
-    output_table_dir = os.path.join(output_dir, 'output_parameters.txt')
-    output_table.write(output_table_dir, format='ascii.fixed_width', delimiter=None, overwrite=True)
+        # Write final data
+        final_data = np.round(output_parameters.T, 5)
+        output_table = table.Table(final_data, names=output_names)
+        output_table_dir = os.path.join(output_dir, 'output_parameters.txt')
+        output_table.write(output_table_dir, format='ascii.fixed_width', delimiter=None, overwrite=True)
 
     # Plot the corner plot
     if plot_corner:
