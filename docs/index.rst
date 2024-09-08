@@ -5,7 +5,7 @@ SLSNe
 sample published in `this paper <https://ui.adsabs.harvard.edu/abs/2024arXiv240707946G>`_, where we describe the methods used to create
 the catalog. In this documentation, we provide a number of functions to access the catalog and work with the data.
 
-For examples on how to access the data see the Tutorials menu.
+For details about the installation and reference data, see the User Guide below.
 
 .. toctree::
    :maxdepth: 2
@@ -13,6 +13,8 @@ For examples on how to access the data see the Tutorials menu.
 
    installation
    reference
+
+For examples on how to access the data see the list of Tutorials below.
 
 .. toctree::
    :maxdepth: 1
@@ -23,13 +25,12 @@ For examples on how to access the data see the Tutorials menu.
    tutorials/bolometric
    tutorials/parameters
    tutorials/mosfit
+   tutorials/evolution
 
 License & Attribution
 ---------------------
 
 Copyright Sebastian Gomez and `contributors <https://github.com/gmzsebastian/SLSNe/graphs/contributors>`_.
-The ``slsne`` package is free software made available under the MIT License.
-
-If you make use of this package or its data in your work, please cite our paper
+The ``slsne`` package is free software made available under the MIT License. If you make use of this package or its data in your work, please cite our paper
 (`arXiv <https://arxiv.org/abs/2407.07946>`_,
 `ADS <https://ui.adsabs.harvard.edu/abs/2024arXiv240707946G>`_).

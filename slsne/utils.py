@@ -478,7 +478,7 @@ def calc_DM(redshift):
     return DM
 
 
-def calc_flux_lum(phot, redshift):
+def calc_flux_lum(phot, redshift, return_lambda=False):
     """
     Calculate F_lambda and L_lambda for a photometry file,
     given a redshift.
@@ -489,6 +489,9 @@ def calc_flux_lum(phot, redshift):
         Table with photometry data
     redshift : float
         Redshift of the object
+    return_lambda : bool, default False
+        If True, return the wavelength of the filter
+        in angstroms.
 
     Returns
     -------
@@ -496,6 +499,8 @@ def calc_flux_lum(phot, redshift):
         Array of flux values in erg/s/cm^2/A
     L_lambda : array
         Array of luminosity values in erg/s/A
+    lambda_AA : array, optional
+        Array of central wavelengths in angstroms.
     """
 
     # If 'zeropoint' or 'cenwave' not in phot, calculate them using quick_cenwave_zeropoint
@@ -520,7 +525,11 @@ def calc_flux_lum(phot, redshift):
     # Calculate luminosity
     L_lambda = F_lambda * 4 * np.pi * DL.to(u.cm) ** 2 * (1 + redshift)
 
-    return F_lambda, L_lambda
+    if return_lambda:
+        lambda_AA = np.array(phot['cenwave']) * u.AA
+        return F_lambda, L_lambda, lambda_AA
+    else:
+        return F_lambda, L_lambda
 
 
 def create_json(object_name, output_dir, default_err=0.1):

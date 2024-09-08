@@ -272,7 +272,11 @@ def diffusion(times, input_luminosities, kappa, kappa_gamma, mejecta, v_ejecta, 
 
     # Return the final luminosities
     uniq_lums = np.trapz(int_args, int_times)
+
+    # Make sure they are positive
+    int_te2s[int_te2s <= 0] = np.nan
     luminosities = uniq_lums * (-2.0 * np.expm1(-A / int_te2s) / td2)
+    luminosities[np.isnan(luminosities)] = 0.0
 
     return luminosities
 
@@ -361,8 +365,11 @@ def mod_blackbody(lam, T, R2, sup_lambda, power_lambda):
     k_B = 1.38064852E-16
 
     # Calculate Radiance B_lam, in units of (erg / s) / cm ^ 2 / cm
-    exponential = (h * c) / (lam_cm * k_B * T)
-    B_lam = ((2 * np.pi * h * c ** 2) / (lam_cm ** 5)) / (np.exp(exponential) - 1)
+    if T > 0:
+        exponential = (h * c) / (lam_cm * k_B * T)
+        B_lam = ((2 * np.pi * h * c ** 2) / (lam_cm ** 5)) / (np.exp(exponential) - 1)
+    else:
+        B_lam = np.zeros_like(lam_cm) * np.nan
 
     # Multiply by the surface area
     A = 4*np.pi*R2
@@ -446,9 +453,10 @@ def blackbody_supressed(times, luminosities, rphot, Tphot, cutoff_wavelength, al
         seds[li] = sed
 
     bb_wavelengths = np.linspace(100, 100000, N_TERMS)
+
     norms = np.array([(R2 * STEF_CONST * T ** 4) /
-                     np.trapz(mod_blackbody(bb_wavelengths, T, R2, cutoff_wavelength, alpha),
-                     bb_wavelengths) for T, R2 in zip(tp, rp2)])
+                      np.trapz(mod_blackbody(bb_wavelengths, T, R2, cutoff_wavelength, alpha),
+                      bb_wavelengths) for T, R2 in zip(tp, rp2)])
 
     # Apply renormalisation
     seds *= norms
