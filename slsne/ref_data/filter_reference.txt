@@ -28,6 +28,7 @@
       B          FLWO   KeplerCam    Vega   4317.22    3811.44
       B          Post          --      AB   Generic    3631.00
       B         LCOGT          --    Vega   Generic    Generic
+      B           LCO          --    Vega   Generic    Generic
       B         Lulin          --    Vega   Generic    Generic
       B         Swift        UVOT      AB   4345.28    3631.00
       B         Swift        UVOT    Vega   4345.28    4088.50
@@ -367,6 +368,7 @@
       u           WHT          --      AB   Generic    3631.00
       u          SDSS          --      AB   3608.04    3631.00
       U         LCOGT          --    Vega   Generic    Generic
+      U           LCO          --    Vega   Generic    Generic
       U         Swift        UVOT      AB   3520.88    3631.00
       u         Swift        UVOT      AB   3520.88    3631.00
       U         Swift        UVOT    Vega   3520.88    1457.11
@@ -415,6 +417,7 @@
       V          FLWO   KeplerCam    Vega   5379.61    3649.88
       V          Post          --      AB   Generic    3631.00
       V         LCOGT          --    Vega   Generic    Generic
+      V           LCO          --    Vega   Generic    Generic
       V         Lulin          --    Vega   Generic    Generic
       V         Swift        UVOT      AB   5411.45    3631.00
       V         Swift        UVOT    Vega   5411.45    3657.87

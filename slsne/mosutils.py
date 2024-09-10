@@ -13,8 +13,9 @@ import os
 from .utils import calc_percentile, quick_cenwave_zeropoint, plot_colors, get_data_table, get_cenwave, get_lc
 from astropy import units as u
 from .models import slsnni, nickelcobalt, magnetar
+from .lcurve import interpolate_1D
 from astropy import table
-import scipy.integrate as itg
+import astropy.constants as c
 plt.rcParams.update({'font.size': 12})
 plt.rcParams.update({'font.family': 'serif'})
 
@@ -170,7 +171,8 @@ def plot_trace(param_chain, param_values, param_values_log, min_val, max_val,
 
 def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
                 exclude=['efficiency', 'lphoto', 'variance'], plot_derived=True,
-                append_derived=False, burn_in=0.9, reference_band='r', is_slsn=True):
+                append_derived=False, burn_in=0.9, reference_band='r', is_slsn=True,
+                is_tde=False):
     '''
     This function plots the trace of all parameters in the chain, and
     optionally the corner plot. The all_chain, chain_names, and data
@@ -200,6 +202,8 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
         The reference band to use for peak calculations.
     is_slsn : bool, default True
         Is the object being processed a SLSN?
+    is_tde : bool, default False
+        Is the object being processed a TDE?
     '''
     # Number of walkers
     n_steps = all_chain.shape[1]
@@ -208,6 +212,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
     setup = data['models'][0]['setup']
     photo = data['photometry']
     model = data['models'][0]
+
+    # Pick default excluded parameters
+    if exclude is None:
+        exclude = ['efficiency', 'lphoto', 'variance']
 
     # Initialize corner chain
     if plot_corner:
@@ -223,7 +231,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
         if 'fnickel' in chain_names:
             derived = ['A_V', 'MJD0', 'kenergy', 'mnickel', 'TSD', 'L0']
         else:
-            derived = ['A_V', 'MJD0', 'kenergy', 'TSD', 'L0']
+            if is_slsn:
+                derived = ['A_V', 'MJD0', 'kenergy', 'TSD', 'L0']
+            else:
+                derived = ['A_V', 'MJD0']
         chain_names = np.append(chain_names, derived)
 
         # Get MJD of first datapoint
@@ -264,12 +275,13 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
             fnickel_index = np.where(chain_names == 'fnickel')[0][0]
         else:
             fnickel_index = None
-        mejecta_index = np.where(chain_names == 'mejecta')[0][0]
-        vejecta_index = np.where(chain_names == 'vejecta')[0][0]
+        if is_slsn:
+            mejecta_index = np.where(chain_names == 'mejecta')[0][0]
+            vejecta_index = np.where(chain_names == 'vejecta')[0][0]
+            pspin_index = np.where(chain_names == 'Pspin')[0][0]
+            bfield_index = np.where(chain_names == 'Bfield')[0][0]
+            Mns_index = np.where(chain_names == 'Mns')[0][0]
         texplosion_index = np.where(chain_names == 'texplosion')[0][0]
-        pspin_index = np.where(chain_names == 'Pspin')[0][0]
-        bfield_index = np.where(chain_names == 'Bfield')[0][0]
-        Mns_index = np.where(chain_names == 'Mns')[0][0]
     else:
         derived = []
 
@@ -296,28 +308,29 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
             if param in derived:
                 if param == 'A_V':
                     param_chain = all_chain[:, :, nhhost_index] / 1.8e21
-                elif param == 'kenergy':
-                    mod_mass = all_chain[:, :, mejecta_index]
-                    mod_velocity = all_chain[:, :, vejecta_index]
-                    # Convert Units
-                    M_SUN_to_GRAMS = u.Msun.to(u.g)
-                    KM_to_CM = u.km.to(u.cm)
-                    param_chain = (3/10) * (mod_mass * M_SUN_to_GRAMS) * (mod_velocity * KM_to_CM) ** 2 / 1E51
-                elif param == 'mnickel':
-                    mod_nickel = all_chain[:, :, fnickel_index]
-                    mod_mass = all_chain[:, :, mejecta_index]
-                    param_chain = mod_nickel * mod_mass
                 elif param == 'MJD0':
                     param_chain = all_chain[:, :, texplosion_index] + MJD0
-                elif param == 'TSD':
-                    mod_pspin = all_chain[:, :, pspin_index]
-                    mod_bfield = all_chain[:, :, bfield_index]
-                    mod_Mns = all_chain[:, :, Mns_index]
-                    param_chain = np.log10(1.3E5 * (mod_pspin ** 2) * (mod_bfield ** -2) * (mod_Mns / 1.4))
-                elif param == 'L0':
-                    mod_pspin = all_chain[:, :, pspin_index]
-                    mod_bfield = all_chain[:, :, bfield_index]
-                    param_chain = np.log10(2E47 * (mod_pspin ** -4) * (mod_bfield ** 2))
+                if is_slsn:
+                    if param == 'kenergy':
+                        mod_mass = all_chain[:, :, mejecta_index]
+                        mod_velocity = all_chain[:, :, vejecta_index]
+                        # Convert Units
+                        M_SUN_to_GRAMS = u.Msun.to(u.g)
+                        KM_to_CM = u.km.to(u.cm)
+                        param_chain = (3/10) * (mod_mass * M_SUN_to_GRAMS) * (mod_velocity * KM_to_CM) ** 2 / 1E51
+                    elif param == 'mnickel':
+                        mod_nickel = all_chain[:, :, fnickel_index]
+                        mod_mass = all_chain[:, :, mejecta_index]
+                        param_chain = mod_nickel * mod_mass
+                    elif param == 'TSD':
+                        mod_pspin = all_chain[:, :, pspin_index]
+                        mod_bfield = all_chain[:, :, bfield_index]
+                        mod_Mns = all_chain[:, :, Mns_index]
+                        param_chain = np.log10(1.3E5 * (mod_pspin ** 2) * (mod_bfield ** -2) * (mod_Mns / 1.4))
+                    elif param == 'L0':
+                        mod_pspin = all_chain[:, :, pspin_index]
+                        mod_bfield = all_chain[:, :, bfield_index]
+                        param_chain = np.log10(2E47 * (mod_pspin ** -4) * (mod_bfield ** 2))
 
             # Unless it is not a derived parameter
             else:
@@ -429,26 +442,33 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
     # Save output parameters
     if is_slsn:
         output_parameters[output_names == 'Bfield'] = np.log10(output_parameters[output_names == 'Bfield'])
-        output_parameters[output_names == 'nhhost'] = np.log10(output_parameters[output_names == 'nhhost'])
         output_parameters[output_names == 'KE'] = np.log10(output_parameters[output_names == 'KE'])
 
         # And modify their names
         output_names[output_names == 'Bfield'] = 'log(Bfield)'
-        output_names[output_names == 'nhhost'] = 'log(nhhost)'
         output_names[output_names == 'KE'] = 'log(KE)'
         output_names[output_names == 'L0'] = 'log(L0)'
 
-        # Append light curve parameters
-        output_parameters = np.vstack([output_parameters, brightest_mag])
-        output_names = np.append(output_names, 'Peak_mag')
-        output_parameters = np.vstack([output_parameters, brightest_day])
-        output_names = np.append(output_names, 'Peak_MJD')
+    if is_tde:
+        # Modify the names of the TDE specific parameters
+        output_parameters[output_names == 'bhmass'] = np.log10(output_parameters[output_names == 'bhmass'])
+        output_names[output_names == 'bhmass'] = 'log(bhmass)'
 
-        # Write final data
-        final_data = np.round(output_parameters.T, 5)
-        output_table = table.Table(final_data, names=output_names)
-        output_table_dir = os.path.join(output_dir, 'output_parameters.txt')
-        output_table.write(output_table_dir, format='ascii.fixed_width', delimiter=None, overwrite=True)
+    # And finally, the generic ones, regardless of SLSN or not
+    output_parameters[output_names == 'nhhost'] = np.log10(output_parameters[output_names == 'nhhost'])
+    output_names[output_names == 'nhhost'] = 'log(nhhost)'
+
+    # Append light curve parameters
+    output_parameters = np.vstack([output_parameters, brightest_mag])
+    output_names = np.append(output_names, 'Peak_mag')
+    output_parameters = np.vstack([output_parameters, brightest_day])
+    output_names = np.append(output_names, 'Peak_MJD')
+
+    # Write final data
+    final_data = np.round(output_parameters.T, 5)
+    output_table = table.Table(final_data, names=output_names)
+    output_table_dir = os.path.join(output_dir, 'output_parameters.txt')
+    output_table.write(output_table_dir, format='ascii.fixed_width', delimiter=None, overwrite=True)
 
     # Plot the corner plot
     if plot_corner:
@@ -463,7 +483,8 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
         plt.close('all')
 
 
-def plot_mosfit_lc(data, object_name, explosion_time, redshift, output_dir, plot_ignored=False):
+def plot_mosfit_lc(data, object_name, explosion_time, redshift, output_dir, plot_ignored=False,
+                   phot=None):
     """
     This function plots the MOSFiT light curve and photometry
     of a supernova.
@@ -482,12 +503,15 @@ def plot_mosfit_lc(data, object_name, explosion_time, redshift, output_dir, plot
         The directory to save the plot.
     plot_ignored : bool, default False
         Whether to plot the ignored photometry.
+    phot : astropy.table.Table, default None
+        The photometry table to plot.
     """
 
     # Get MOSFiT model
     model = data['models'][0]
     # Get photometry
-    phot = get_lc(object_name, lc_type='phot')
+    if phot is None:
+        phot = get_lc(object_name, lc_type='phot')
     # Calculate observed phase
     observed_phase = (phot['MJD'] - explosion_time) / (1 + redshift)
 
@@ -789,7 +813,8 @@ def plot_mosfit_lc(data, object_name, explosion_time, redshift, output_dir, plot
                         delimiter=None, overwrite=True)
 
 
-def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir):
+def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir,
+                          is_tde=False):
     """
     This function calculates the bolometric light curve from the MOSFiT output.
 
@@ -805,6 +830,8 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir):
         The redshift of the object.
     output_dir : str
         The directory to save the plot
+    is_tde : bool, default False
+        Is the object being processed a tidal disruption event?
     """
 
     # Get reference time from MOSFiT photometry
@@ -822,20 +849,51 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir):
     tem_out = temperaturephot.T[time_ind].T
     lum_out = luminosities.T[time_ind].T
 
+    # Extract extra parameter specific to TDEs
+    if is_tde:
+        min_length = np.min([len(i) for i in extras['dense_times']])
+        dense_times = np.array([i[:min_length] for i in extras['dense_times']]) * (1 + redshift) + t_ref
+        dmdt = np.array([i[:min_length] for i in extras['dmdt']])
+        dmt_out = np.array([interpolate_1D(dense_times_i, interp_dmdt_i, times_out)
+                            for dense_times_i, interp_dmdt_i in zip(dense_times, dmdt)])
+
+        # Calculate the Mdot scaled to the Eddington luminosity.
+        # Opacity is assumed to be 0.2 * (1 + 0.74)
+        kappa = 0.2 * (1 + 0.74)
+        # Black hole mass and efficiency
+        bh_mass = np.array([i['parameters']['bhmass']['value'] for i in data['models'][0]['realizations']])
+        efficiency = np.array([i['parameters']['efficiency']['value'] for i in data['models'][0]['realizations']])
+        # Eddington Luminosity
+        Ledd = bh_mass * 4 * np.pi * c.G.cgs.value * c.M_sun.cgs.value * c.c.cgs.value / kappa
+        # Eddington accretion rate
+        Mdot_edd = Ledd / (efficiency * c.c.cgs.value * c.c.cgs.value)
+        # Scale dM/dt to Eddington
+        norm_out = dmt_out / Mdot_edd[:, np.newaxis]
+
     # Clean pre-explosion data
     pre = (rad_out == 0) | np.isinf(tem_out)
     rad_out[pre] = 0
     tem_out[pre] = 0
     lum_out[pre] = 0
+    dmt_out[pre] = 0
+    norm_out[pre] = 0
 
     # Get 1-sigma ranges
     rad_low, rad_med, rad_high = np.nanpercentile(rad_out, [15.87, 50, 84.13], axis=0)
     tem_low, tem_med, tem_high = np.nanpercentile(tem_out, [15.87, 50, 84.13], axis=0)
     lum_low, lum_med, lum_high = np.nanpercentile(lum_out, [15.87, 50, 84.13], axis=0)
+    dmt_low, dmt_med, dmt_high = np.nanpercentile(dmt_out, [15.87, 50, 84.13], axis=0)
+    norm_low, norm_med, norm_high = np.nanpercentile(norm_out, [15.87, 50, 84.13], axis=0)
 
     # Save output
-    output = (times_out, rad_low, rad_med, rad_high, tem_low, tem_med, tem_high, lum_low, lum_med, lum_high)
-    colnames = ('MJD', 'R_low', 'R_med', 'R_high', 'T_low', 'T_med', 'T_high', 'L_low', 'L_med', 'L_high')
+    if is_tde:
+        output = (times_out, rad_low, rad_med, rad_high, tem_low, tem_med, tem_high, lum_low, lum_med, lum_high,
+                  dmt_low, dmt_med, dmt_high, norm_low, norm_med, norm_high)
+        colnames = ('MJD', 'R_low', 'R_med', 'R_high', 'T_low', 'T_med', 'T_high', 'L_low', 'L_med', 'L_high',
+                    'dmdt_low', 'dmdt_med', 'dmdt_high', 'norm_low', 'norm_med', 'norm_high')
+    else:
+        output = (times_out, rad_low, rad_med, rad_high, tem_low, tem_med, tem_high, lum_low, lum_med, lum_high)
+        colnames = ('MJD', 'R_low', 'R_med', 'R_high', 'T_low', 'T_med', 'T_high', 'L_low', 'L_med', 'L_high')
     table_out = table.Table(output, names=colnames)
     bol_dir = os.path.join(output_dir, f'{object_name}_bol.txt')
     table_out.write(bol_dir, format='ascii.fixed_width', delimiter=None, overwrite=True)
@@ -860,7 +918,7 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir):
     np.savetxt(peak_lum_dir, peak_lum)
 
     # Calculate Total luminosity
-    total_lum = itg.trapz(lum_out, times_out*3600*24) / (1 + redshift)
+    total_lum = np.trapz(lum_out, times_out*3600*24) / (1 + redshift)
     bol_out = calc_percentile(np.log10(total_lum))
     e_rad_dir = os.path.join(output_dir, 'E_rad.txt')
     np.savetxt(e_rad_dir, bol_out)
@@ -902,7 +960,8 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir):
         output_table.write(output_table_dir, format='ascii.fixed_width', delimiter=None, overwrite=True)
 
 
-def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True):
+def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True,
+                       is_slsn=True):
     """
     This function calculates the rest-frame parameters for a given object.
 
@@ -916,6 +975,8 @@ def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True):
         The redshift of the object.
     save_rest_frame : bool, default True
         Whether to create and save the rest-frame light curve.
+    is_slsn : bool, default True
+        Whether the object is a superluminous supernova.
     """
 
     # Read output parameter table
@@ -1073,7 +1134,8 @@ def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True):
 
 
 def process_mosfit(object_name, mosfit_dir, output_dir, data_table=None, redshift=None, plot_parameters=True,
-                   plot_corner=True, plot_lc=True, plot_bol=True, calc_rest=True, save_rest_frame=True):
+                   plot_corner=True, plot_lc=True, plot_bol=True, calc_rest=True, save_rest_frame=True,
+                   is_slsn=True, phot=None, is_tde=False, exclude=None):
     """
     This function processes the MOSFiT output for a given object. Combining the other
     functions in this module.
@@ -1102,6 +1164,14 @@ def process_mosfit(object_name, mosfit_dir, output_dir, data_table=None, redshif
         Whether to calculate the rest frame parameters.
     save_rest_frame : bool, default True
         Whether to save the rest frame light curve.
+    is_slsn : bool, default True
+        Whether the object is a superluminous supernova.
+    phot : astropy.table.Table, default None
+        The photometry table to plot.
+    is_tde : bool, default False
+        Whether the object is a tidal disruption event.
+    exclude : list, default None
+        The list of parameters to exclude from the corner plot.
     """
 
     # Import MOSFiT data
@@ -1118,7 +1188,8 @@ def process_mosfit(object_name, mosfit_dir, output_dir, data_table=None, redshif
 
     # Plot the trace and corner plot and save output parameters
     if plot_parameters:
-        plot_params(all_chain, chain_names, data, output_dir, plot_corner=plot_corner)
+        plot_params(all_chain, chain_names, data, output_dir, plot_corner=plot_corner, is_slsn=is_slsn,
+                    exclude=exclude, is_tde=is_tde)
 
     # Get explosion time
     mjd_dir = os.path.join(output_dir, 'MJD0.txt')
@@ -1126,12 +1197,12 @@ def process_mosfit(object_name, mosfit_dir, output_dir, data_table=None, redshif
 
     # Plot the MOSFiT light curve and save model light curve
     if plot_lc:
-        plot_mosfit_lc(data, object_name, explosion_time, redshift, output_dir)
+        plot_mosfit_lc(data, object_name, explosion_time, redshift, output_dir, phot=phot)
 
     # Create the bolometric evolution
     if plot_bol:
-        get_mosfit_bolometric(extras, data, object_name, redshift, output_dir)
+        get_mosfit_bolometric(extras, data, object_name, redshift, output_dir, is_tde=is_tde)
 
     # Calculate rest frame parameters
     if calc_rest:
-        process_rest_frame(object_name, output_dir, redshift, save_rest_frame)
+        process_rest_frame(object_name, output_dir, redshift, save_rest_frame, is_slsn=is_slsn)

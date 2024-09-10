@@ -18,6 +18,7 @@ setup(
         'dust_extinction',
         'extinction',
         'astropy',
+        'corner',
         'scipy',
         'numexpr'
     ]

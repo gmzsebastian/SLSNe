@@ -3,6 +3,7 @@ numpy
 scipy
 astropy
 matplotlib
+corner
 
 # Testing dependencies
 pytest
