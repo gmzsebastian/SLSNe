@@ -18,6 +18,7 @@
       B           P60      GRBcam      AB   Generic    3631.00
       B           P60     P60-Cam    Vega   Generic    Generic
       B           PTF          --    Vega   Generic    Generic
+      B           P48         PTF    Vega   Generic    Generic
       B           SLT          --      AB   Generic    3631.00
       B           TNG          --    Vega   Generic    Generic
       B           TNT          --    Vega   Generic    Generic
@@ -28,11 +29,25 @@
       B          FLWO   KeplerCam    Vega   4317.22    3811.44
       B          Post          --      AB   Generic    3631.00
       B         LCOGT          --    Vega   Generic    Generic
+   TESS          TESS        TESS      AB   7452.64    3631.00
+   TESS          TESS        TESS    Vega   7452.64    2631.88
+      B      LCOGT_4m          --      AB   Generic    Generic
+      g      LCOGT_4m          --      AB   Generic    Generic
+      i      LCOGT_4m          --      AB   Generic    Generic
+      r      LCOGT_4m          --      AB   Generic    Generic
+      V      LCOGT_4m          --      AB   Generic    Generic
+      B      LCOGT_1m          --      AB   Generic    Generic
+      g      LCOGT_1m          --      AB   Generic    Generic
+      i      LCOGT_1m          --      AB   Generic    Generic
+      r      LCOGT_1m          --      AB   Generic    Generic
+      V      LCOGT_1m          --      AB   Generic    Generic
       B           LCO          --    Vega   Generic    Generic
+      B           LCO          --      AB   Generic    Generic
       B         Lulin          --    Vega   Generic    Generic
       B         Swift        UVOT      AB   4345.28    3631.00
       B         Swift        UVOT    Vega   4345.28    4088.50
       B         Swope         CCD    Vega   4395.02    4012.55
+      B         Swope         CCD      AB   4395.02    3631.00
       B        duPont       WFCCD    Vega   Generic    Generic
       B        Helmos      LN2CCD      AB   Generic    3631.00
       B       Lijiang          --    Vega   Generic    Generic
@@ -60,6 +75,9 @@
   F775W           HST         ACS    Vega   7652.44    2516.53
  F850LP           HST         ACS    Vega   9004.99    2232.90
       g            --          --      AB   Generic    3631.00
+      g     Synthetic          --      AB   Generic    3631.00
+      B     Synthetic          --      AB   Generic    3631.00
+      V     Synthetic          --      AB   Generic    3631.00
       g            GN          --      AB   Generic    3631.00
       g            GS          --      AB   Generic    3631.00
       g            LT          --      AB   Generic    3631.00
@@ -91,6 +109,7 @@
       g           PS1          --      AB   4810.16    3631.00
       g           PS1        GPC1      AB   4810.16    3631.00
       g           PTF          --      AB   Generic    3631.00
+      g           P48         PTF      AB   Generic    3631.00
       g           TNG          --      AB   Generic    3631.00
       g           TNT          --      AB   Generic    3631.00
       g           WHT          --      AB   Generic    3631.00
@@ -137,6 +156,7 @@
       H         GROND          --    Vega  16329.48    1016.37
       H    UltraVISTA          --      AB   Generic    3631.00
       i            --          --      AB   Generic    3631.00
+      i     Synthetic          --      AB   Generic    3631.00
       I            --          --    Vega   Generic    Generic
       i            GN          --      AB   Generic    3631.00
       i            GS          --      AB   Generic    3631.00
@@ -154,6 +174,7 @@
       i           INT          --      AB   Generic    3631.00
       i           LBT          --      AB   Generic    3631.00
       i           LCO          --      AB   Generic    3631.00
+      I           LCO          --      AB   Generic    3631.00
       i           LCO         LCO      AB   Generic    3631.00
       i           LCO    Sinistro      AB   Generic    3631.00
       i           LOT          --      AB   Generic    3631.00
@@ -177,6 +198,7 @@
       i           PS1        GPC1      AB   7503.03    3631.00
       i           PS2        GPC2      AB   7503.03    3631.00
       i           PTF          --      AB   Generic    3631.00
+      i           P48         PTF      AB   Generic    3631.00
       I           SLT          --      AB   Generic    3631.00
       i           TNG          --      AB   Generic    3631.00
       i           TNT          --      AB   Generic    3631.00
@@ -250,7 +272,13 @@
      Ks         GROND          --      AB   Generic    3631.00
      Ks    UltraVISTA          --      AB   Generic    3631.00
  orange         ATLAS       ATLAS      AB   6629.82    3631.00
+      g          PO24          --      AB   Generic    3631.00
+      r          PO24          --      AB   Generic    3631.00
+      i          PO24          --      AB   Generic    3631.00
+      B          PO24          --      AB   Generic    3631.00
+      V          PO24          --      AB   Generic    3631.00
       r            --          --      AB   Generic    3631.00
+      r     Synthetic          --      AB   Generic    3631.00
       R            --          --    Vega   Generic    Generic
       r            GN          --      AB   Generic    3631.00
       r            GS          --      AB   Generic    3631.00
@@ -289,6 +317,7 @@
       r           NTT      EFOSC2      AB   Generic    3631.00
       R           NTT      EFOSC2    Vega   Generic    Generic
       R           P48          --      AB   Generic    3631.00
+      R           P48         PTF      AB   Generic    3631.00
       r           P48          --      AB   Generic    3631.00
       R           P48          --    Vega   Generic    Generic
       r           P48         ZTF      AB   6366.38    3631.00
@@ -298,6 +327,7 @@
       r           PS1          --      AB   6155.47    3631.00
       r           PS2        GPC2      AB   6155.47    3631.00
       r           PTF          --      AB   Generic    3631.00
+      r           P48         PTF      AB   Generic    3631.00
       R           SLT          --      AB   Generic    3631.00
       R           SSS          --    Vega   Generic    Generic
       r           TNG          --      AB   Generic    3631.00
@@ -353,6 +383,8 @@
      Rs          Keck        LRIS      AB   6734.34    3631.00
       U            --          --      AB   Generic    3631.00
       u            --          --      AB   Generic    3631.00
+      U     Synthetic          --      AB   Generic    3631.00
+      u     Synthetic          --      AB   Generic    3631.00
       U            --          --    Vega   Generic    Generic
       u            LT          --      AB   Generic    3631.00
       u            LT         IOO      AB   3513.68    3631.00
@@ -405,6 +437,7 @@
       V           NTT      EFOSC2    Vega   Generic    Generic
       V           P60     P60-Cam    Vega   Generic    Generic
       V           PTF          --    Vega   Generic    Generic
+      V           P48         PTF    Vega   Generic    Generic
       V           SLT          --      AB   Generic    3631.00
       V           TNG          --    Vega   Generic    Generic
       V           TNT          --    Vega   Generic    Generic
@@ -418,11 +451,18 @@
       V          Post          --      AB   Generic    3631.00
       V         LCOGT          --    Vega   Generic    Generic
       V           LCO          --    Vega   Generic    Generic
+      V           LCO          --      AB   Generic    Generic
       V         Lulin          --    Vega   Generic    Generic
       V         Swift        UVOT      AB   5411.45    3631.00
       V         Swift        UVOT    Vega   5411.45    3657.87
       V         Swope         CCD    Vega   5350.44    3680.82
+      V         Swope         CCD      AB   5350.44    3631.00
+      u         Swope         CCD      AB   3648.35    3631.00
+      g         Swope         CCD      AB   4716.67    3631.00
+      r         Swope         CCD      AB   6180.78    3631.00
+      i         Swope         CCD      AB   7603.67    3631.00
       V        ASASSN      ASASSN    Vega   5393.85    3665.97
+      V        ASASSN      ASASSN      AB   5393.85    3631.00
       V        duPont       WFCCD    Vega   Generic    Generic
       V        Helmos      LN2CCD      AB   Generic    3631.00
       V       Lijiang          --    Vega   Generic    Generic
@@ -456,6 +496,7 @@
       y        Subaru         HSC      AB   Generic    3631.00
       Y    UltraVISTA          --      AB   Generic    3631.00
       z            --          --      AB   Generic    3631.00
+      z     Synthetic          --      AB   Generic    3631.00
       z            GN          --      AB   Generic    3631.00
       z            GS          --      AB   Generic    3631.00
       z            LT          --      AB   Generic    3631.00
@@ -477,6 +518,7 @@
       z           TNG          --      AB   Generic    3631.00
       z           WHT          --      AB   Generic    3631.00
       z          CFHT          --      AB   Generic    3631.00
+      u          CFHT     Megacam      AB   3747.03    3631.00
       z          SDSS          --      AB   8922.78    3631.00
       z          SNLS          --    Vega   Generic    Generic
       z         GROND          --      AB   8927.54    3631.00

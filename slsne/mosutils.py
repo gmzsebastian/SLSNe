@@ -12,7 +12,7 @@ import json
 import os
 from .utils import calc_percentile, quick_cenwave_zeropoint, plot_colors, get_data_table, get_cenwave, get_lc
 from astropy import units as u
-from .models import slsnni, nickelcobalt, magnetar
+from .models import slsnni, nickelcobalt, magnetar, tde
 from .lcurve import interpolate_1D
 from astropy import table
 import astropy.constants as c
@@ -475,8 +475,8 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
         print('Plotting corner plot...')
         import corner
         fig = corner.corner(corner_chain.T, labels=names, truths=truths, show_titles=True,
-                            quantiles=[0.1587, 0.50, 0.8413], title_kwargs={"fontsize": 20},
-                            label_kwargs={"fontsize": 20}, use_math_text=True, smooth=2)
+                            quantiles=[0.1587, 0.50, 0.8413], title_kwargs={"fontsize": 16},
+                            label_kwargs={"fontsize": 16}, use_math_text=True, smooth=2)
         corner_path = os.path.join(output_dir, 'corner.pdf')
         fig.savefig(corner_path)
         plt.clf()
@@ -814,7 +814,7 @@ def plot_mosfit_lc(data, object_name, explosion_time, redshift, output_dir, plot
 
 
 def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir,
-                          is_tde=False):
+                          is_tde=False, host_bh_masses={}):
     """
     This function calculates the bolometric light curve from the MOSFiT output.
 
@@ -832,6 +832,8 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir,
         The directory to save the plot
     is_tde : bool, default False
         Is the object being processed a tidal disruption event?
+    host_bh_masses : dict, default {}
+        Dictionary of BH masses to calculate normalized dmdt
     """
 
     # Get reference time from MOSFiT photometry
@@ -869,6 +871,15 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir,
         Mdot_edd = Ledd / (efficiency * c.c.cgs.value * c.c.cgs.value)
         # Scale dM/dt to Eddington
         norm_out = dmt_out / Mdot_edd[:, np.newaxis]
+        if len(host_bh_masses) > 0:
+            # Scale using host galaxy mass
+            host_bh_mass = host_bh_masses[object_name]
+            Ledd_host = host_bh_mass * 4 * np.pi * c.G.cgs.value * c.M_sun.cgs.value * c.c.cgs.value / kappa
+            host_Mdot_edd = Ledd_host / (efficiency * c.c.cgs.value * c.c.cgs.value)
+            host_norm_out = dmt_out / host_Mdot_edd[:, np.newaxis]
+            do_host_norm = True
+        else:
+            do_host_norm = False
 
     # Clean pre-explosion data
     pre = (rad_out == 0) | np.isinf(tem_out)
@@ -877,6 +888,8 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir,
     lum_out[pre] = 0
     dmt_out[pre] = 0
     norm_out[pre] = 0
+    if do_host_norm:
+        host_norm_out[pre] = 0
 
     # Get 1-sigma ranges
     rad_low, rad_med, rad_high = np.nanpercentile(rad_out, [15.87, 50, 84.13], axis=0)
@@ -884,13 +897,23 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir,
     lum_low, lum_med, lum_high = np.nanpercentile(lum_out, [15.87, 50, 84.13], axis=0)
     dmt_low, dmt_med, dmt_high = np.nanpercentile(dmt_out, [15.87, 50, 84.13], axis=0)
     norm_low, norm_med, norm_high = np.nanpercentile(norm_out, [15.87, 50, 84.13], axis=0)
+    if do_host_norm:
+        host_norm_low, host_norm_med, host_norm_high = np.nanpercentile(host_norm_out, [15.87, 50, 84.13], axis=0)
 
     # Save output
     if is_tde:
-        output = (times_out, rad_low, rad_med, rad_high, tem_low, tem_med, tem_high, lum_low, lum_med, lum_high,
-                  dmt_low, dmt_med, dmt_high, norm_low, norm_med, norm_high)
-        colnames = ('MJD', 'R_low', 'R_med', 'R_high', 'T_low', 'T_med', 'T_high', 'L_low', 'L_med', 'L_high',
-                    'dmdt_low', 'dmdt_med', 'dmdt_high', 'norm_low', 'norm_med', 'norm_high')
+        if do_host_norm:
+            output = (times_out, rad_low, rad_med, rad_high, tem_low, tem_med, tem_high, lum_low, lum_med, lum_high,
+                      dmt_low, dmt_med, dmt_high, norm_low, norm_med, norm_high,
+                      host_norm_low, host_norm_med, host_norm_high)
+            colnames = ('MJD', 'R_low', 'R_med', 'R_high', 'T_low', 'T_med', 'T_high', 'L_low', 'L_med', 'L_high',
+                        'dmdt_low', 'dmdt_med', 'dmdt_high', 'dmdt_norm_low', 'dmdt_norm_med', 'dmdt_norm_high',
+                        'host_dmdt_norm_low', 'host_dmdt_norm_med', 'host_dmdt_norm_high')
+        else:
+            output = (times_out, rad_low, rad_med, rad_high, tem_low, tem_med, tem_high, lum_low, lum_med, lum_high,
+                      dmt_low, dmt_med, dmt_high, norm_low, norm_med, norm_high)
+            colnames = ('MJD', 'R_low', 'R_med', 'R_high', 'T_low', 'T_med', 'T_high', 'L_low', 'L_med', 'L_high',
+                        'dmdt_low', 'dmdt_med', 'dmdt_high', 'dmdt_norm_low', 'dmdt_norm_med', 'dmdt_norm_high')
     else:
         output = (times_out, rad_low, rad_med, rad_high, tem_low, tem_med, tem_high, lum_low, lum_med, lum_high)
         colnames = ('MJD', 'R_low', 'R_med', 'R_high', 'T_low', 'T_med', 'T_high', 'L_low', 'L_med', 'L_high')
@@ -961,7 +984,7 @@ def get_mosfit_bolometric(extras, data, object_name, redshift, output_dir,
 
 
 def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True,
-                       is_slsn=True):
+                       is_slsn=True, is_tde=False):
     """
     This function calculates the rest-frame parameters for a given object.
 
@@ -977,6 +1000,8 @@ def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True,
         Whether to create and save the rest-frame light curve.
     is_slsn : bool, default True
         Whether the object is a superluminous supernova.
+    is_tde : bool, default False
+        Whether the object is a tidal disruption event.
     """
 
     # Read output parameter table
@@ -1006,47 +1031,69 @@ def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True,
     for j in range(len(output_table)):
         print('\t', j + 1, '/', len(output_table))
         param = output_table[j]
-        Pspin = param['Pspin']
-        Bfield = 10 ** param['log(Bfield)'] / 1e14
-        Mns = param['Mns']
-        thetaPB = param['thetaPB']
-        # texplosion = param['texplosion']
-        kappa = param['kappa']
-        log_kappa_gamma = np.log10(param['kappagamma'])
-        mejecta = param['mejecta']
-        if 'fnickel' in param.colnames:
-            fnickel = param['fnickel']
-        else:
-            fnickel = 0.0
-        v_ejecta = param['vejecta']
-        temperature = param['temperature']
-        cut_wave = param['cutoff_wavelength']
-        alpha = param['alpha']
+        if is_slsn:
+            Pspin = param['Pspin']
+            Bfield = 10 ** param['log(Bfield)'] / 1e14
+            Mns = param['Mns']
+            thetaPB = param['thetaPB']
+            # texplosion = param['texplosion']
+            kappa = param['kappa']
+            log_kappa_gamma = np.log10(param['kappagamma'])
+            mejecta = param['mejecta']
+            if 'fnickel' in param.colnames:
+                fnickel = param['fnickel']
+            else:
+                fnickel = 0.0
+            v_ejecta = param['vejecta']
+            temperature = param['temperature']
+            cut_wave = param['cutoff_wavelength']
+            alpha = param['alpha']
 
-        # Modify parameters for rest-frame models
-        texplosion_rest = param['texplosion'] - np.median(output_table['texplosion'])
-        redshift_rest = 0
-        log_nh_host_rest = 16
+            # Modify parameters for rest-frame models
+            texplosion_rest = param['texplosion'] - np.median(output_table['texplosion'])
+            redshift_rest = 0
+            log_nh_host_rest = 16
 
-        # Get magnitudes in each band
-        output_mags = slsnni(phases, Pspin, Bfield, Mns, thetaPB, texplosion_rest, kappa,
-                             log_kappa_gamma, mejecta, fnickel, v_ejecta, temperature,
-                             cut_wave, alpha, redshift_rest, log_nh_host_rest, ebv, bands)
+            # Get magnitudes in each band
+            output_mags = slsnni(phases, Pspin, Bfield, Mns, thetaPB, texplosion_rest, kappa,
+                                 log_kappa_gamma, mejecta, fnickel, v_ejecta, temperature,
+                                 cut_wave, alpha, redshift_rest, log_nh_host_rest, ebv, bands)
 
-        # Calculate corresponding nickel and magnetar luminosities
-        nickel_lum = nickelcobalt(phases, fnickel, mejecta, rest_t_explosion=0)
-        magnetar_lum = magnetar(phases, Pspin, Bfield, Mns, thetaPB, rest_t_explosion=0)
+            # Calculate corresponding nickel and magnetar luminosities
+            nickel_lum = nickelcobalt(phases, fnickel, mejecta, rest_t_explosion=0)
+            magnetar_lum = magnetar(phases, Pspin, Bfield, Mns, thetaPB, rest_t_explosion=0)
 
-        # Integrate to get total luminosity
-        nickel_total = np.trapz(nickel_lum, phases * 24 * 3600)
-        magnetar_total = np.trapz(magnetar_lum, phases * 24 * 3600)
+            # Integrate to get total luminosity
+            nickel_total = np.trapz(nickel_lum, phases * 24 * 3600)
+            magnetar_total = np.trapz(magnetar_lum, phases * 24 * 3600)
 
-        # Calculate the fraction of magnetar luminosity
-        fraction = magnetar_total / (nickel_total + magnetar_total)
+            # Calculate the fraction of magnetar luminosity
+            fraction = magnetar_total / (nickel_total + magnetar_total)
 
-        # Append to list
-        fractions = np.append(fractions, fraction)
-        model_obs.append(output_mags)
+            # Append to list
+            fractions = np.append(fractions, fraction)
+            model_obs.append(output_mags)
+        elif is_tde:
+            # Read TDE parameters
+            b = param['b']
+            starmass = param['starmass']
+            bhmass = 10 ** param['log(bhmass)']
+            efficiency = param['efficiency']
+            lphoto = param['lphoto']
+            Rph0 = param['Rph0']
+            Tviscous = param['Tviscous']
+
+            # Modify parameters for rest-frame models
+            texplosion_rest = param['texplosion'] - np.median(output_table['texplosion'])
+            redshift_rest = 0
+            log_nh_host_rest = 16
+
+            # Get magnitudes in each band
+            output_mags = tde(phases, texplosion_rest, b, starmass, bhmass, efficiency, lphoto, Rph0, Tviscous,
+                              redshift_rest, log_nh_host_rest, ebv, bands)
+
+            # Append to list
+            model_obs.append(output_mags)
 
     # Get rest-frame r and B-bands
     r_bands = np.array([k['r'] for k in model_obs])
@@ -1085,8 +1132,9 @@ def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True,
         output_table['delta_m15'] = np.round(Delta_m15, 5)
     if 'r_peak' not in output_table.colnames:
         output_table['r_peak'] = np.round(r_peak, 5)
-    if 'frac' not in output_table.colnames:
-        output_table['frac'] = np.round(fractions, 5)
+    if is_slsn:
+        if 'frac' not in output_table.colnames:
+            output_table['frac'] = np.round(fractions, 5)
     output_table.write(output_table_dir, format='ascii.fixed_width', delimiter=None, overwrite=True)
 
     # Save the rest frame light curve
@@ -1135,7 +1183,7 @@ def process_rest_frame(object_name, output_dir, redshift, save_rest_frame=True,
 
 def process_mosfit(object_name, mosfit_dir, output_dir, data_table=None, redshift=None, plot_parameters=True,
                    plot_corner=True, plot_lc=True, plot_bol=True, calc_rest=True, save_rest_frame=True,
-                   is_slsn=True, phot=None, is_tde=False, exclude=None):
+                   is_slsn=True, phot=None, is_tde=False, exclude=None, host_bh_masses={}):
     """
     This function processes the MOSFiT output for a given object. Combining the other
     functions in this module.
@@ -1172,6 +1220,8 @@ def process_mosfit(object_name, mosfit_dir, output_dir, data_table=None, redshif
         Whether the object is a tidal disruption event.
     exclude : list, default None
         The list of parameters to exclude from the corner plot.
+    host_bh_masses : dict, default {}
+        Dictionary of BH masses to calculate normalized dmdt
     """
 
     # Import MOSFiT data
@@ -1201,8 +1251,9 @@ def process_mosfit(object_name, mosfit_dir, output_dir, data_table=None, redshif
 
     # Create the bolometric evolution
     if plot_bol:
-        get_mosfit_bolometric(extras, data, object_name, redshift, output_dir, is_tde=is_tde)
+        get_mosfit_bolometric(extras, data, object_name, redshift, output_dir,
+                              is_tde=is_tde, host_bh_masses=host_bh_masses)
 
     # Calculate rest frame parameters
     if calc_rest:
-        process_rest_frame(object_name, output_dir, redshift, save_rest_frame, is_slsn=is_slsn)
+        process_rest_frame(object_name, output_dir, redshift, save_rest_frame, is_slsn=is_slsn, is_tde=is_tde)
