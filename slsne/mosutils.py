@@ -234,7 +234,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
             if is_slsn:
                 derived = ['A_V', 'MJD0', 'kenergy', 'TSD', 'L0']
             else:
-                derived = ['A_V', 'MJD0']
+                if 'texplosion' in chain_names:
+                    derived = ['A_V', 'MJD0']
+                else:
+                    derived = ['A_V']
         chain_names = np.append(chain_names, derived)
 
         # Get MJD of first datapoint
@@ -270,7 +273,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
                         'min_value': 1,
                         'max_value': 1.0e10}
 
-        nhhost_index = np.where(chain_names == 'nhhost')[0][0]
+        if 'nhhost' in chain_names:
+            nhhost_index = np.where(chain_names == 'nhhost')[0][0]
+        else:
+            nhhost_index = None
         if 'fnickel' in chain_names:
             fnickel_index = np.where(chain_names == 'fnickel')[0][0]
         else:
@@ -281,7 +287,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
             pspin_index = np.where(chain_names == 'Pspin')[0][0]
             bfield_index = np.where(chain_names == 'Bfield')[0][0]
             Mns_index = np.where(chain_names == 'Mns')[0][0]
-        texplosion_index = np.where(chain_names == 'texplosion')[0][0]
+        if 'texplosion' in chain_names:
+            texplosion_index = np.where(chain_names == 'texplosion')[0][0]
+        else:
+            texplosion_index = None
     else:
         derived = []
 
@@ -307,7 +316,10 @@ def plot_params(all_chain, chain_names, data, output_dir, plot_corner=True,
             # Modify the chain if necessary
             if param in derived:
                 if param == 'A_V':
-                    param_chain = all_chain[:, :, nhhost_index] / 1.8e21
+                    if nhhost_index:
+                        param_chain = all_chain[:, :, nhhost_index] / 1.8e21
+                    else:
+                        param_chain = all_chain[:, :, 0] * 0
                 elif param == 'MJD0':
                     param_chain = all_chain[:, :, texplosion_index] + MJD0
                 if is_slsn:
@@ -1257,7 +1269,10 @@ def process_mosfit(object_name, mosfit_dir, output_dir, data_table=None, redshif
 
     # Get explosion time
     mjd_dir = os.path.join(output_dir, 'MJD0.txt')
-    explosion_time = np.genfromtxt(mjd_dir)[0]
+    if os.path.exists(mjd_dir):
+        explosion_time = np.genfromtxt(mjd_dir)[0]
+    else:
+        explosion_time = float(data['photometry'][0]['time'])
 
     # Plot the MOSFiT light curve and save model light curve
     if plot_lc:

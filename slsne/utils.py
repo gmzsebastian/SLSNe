@@ -402,7 +402,14 @@ def plot_colors(band):
         'F158': '#EEDD88',
         'F184': '#EE8866',
         'F213': '#B704C2',
-        'F146': '#994455'
+        'F146': '#994455',
+        'F115W': '#003366',
+        'F150W': '#0077BB',
+        'F200W': '#99DDFF',
+        'F277W': '#44BB99',
+        'F356W': '#EEDD88',
+        'F410M': '#EE8866',
+        'F444W': '#B704C2',
     }
 
     # Get the color for the given band, default to 'k' if not found
@@ -484,6 +491,40 @@ def calc_DM(redshift):
     DL = calc_DL(redshift)
     DM = 5 * np.log10(DL / 10)
     return DM
+
+
+def calc_absmag(obsmag, redshift, k_correct=True):
+    """
+    Calculate the absolute magnitude for a given redshift.
+
+    Parameters
+    ----------
+    obsmag : float
+        Observed magnitude
+    redshift : float
+        Redshift of the object
+    k_correct : bool, default True
+        If True, apply a k-correction to the magnitude
+
+    Returns
+    -------
+    absmag : float
+        Absolute magnitude
+    """
+
+    # Calculate distance modulus
+    DM = calc_DM(redshift)
+
+    # Apply k-correction
+    if k_correct:
+        kcorr = 2.5 * np.log10(1 + redshift)
+    else:
+        kcorr = 0
+
+    # Calculate absolute magnitude
+    absmag = obsmag - DM + kcorr
+
+    return absmag
 
 
 def calc_flux_lum(phot, redshift, return_lambda=False):

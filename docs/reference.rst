@@ -166,10 +166,10 @@ models, or measured from observational features. Here we list each parameter, it
       - Number of frame days from explosion to bolometirc peak.
     * - E_fold           
       - .. math:: \tau_{e}\ [{\rm Days}]
-      - Time it takes the SN to decline by a factor of e.
+      - Time it takes the bolometric luminosity of the SN to decline by a factor of e.
     * - tau_1            
       - .. math:: \tau_{\rm 1}\ [{\rm Days}]
-      - Time it takes the SN to decline by 1 magnitude.
+      - Time it takes the SN to decline by 1 magnitude in r-band.
     * - delta_m15        
       - .. math:: \Delta m_{15}\ [{\rm mag}]
       - Magnitudes by which the SN fades 15 days after maximum in B-band.

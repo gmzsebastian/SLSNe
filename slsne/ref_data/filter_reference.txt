@@ -518,6 +518,7 @@
       z           NTT          --      AB   Generic    3631.00
       z           NTT          --    Vega   Generic    Generic
       z           P60          --      AB   Generic    3631.00
+      z          FLWO   KeplerCam      AB  10023.96    3631.00
       z           PS1          --      AB   8668.36    3631.00
       z           PS2        GPC2      AB   8668.36    3631.00
       z           TNG          --      AB   Generic    3631.00
@@ -538,3 +539,11 @@
       z     Copernico          --      AB   Generic    3631.00
       z     Copernico       AFOSC      AB   Generic    3631.00
       z     SkyMapper          --      AB   9120.25    3631.00
+  F115W          JWST      NIRCam      AB  11433.62    3631.00
+  F150W          JWST      NIRCam      AB  14872.56    3631.00
+  F200W          JWST      NIRCam      AB  19680.41    3631.00
+  F277W          JWST      NIRCam      AB  27278.58    3631.00
+  F356W          JWST      NIRCam      AB  35287.04    3631.00
+  F410M          JWST      NIRCam      AB  40723.18    3631.00
+  F444W          JWST      NIRCam      AB  43504.26    3631.00
+
