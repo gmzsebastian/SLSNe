@@ -26,6 +26,7 @@ For examples on how to access the data see the list of Tutorials below.
    tutorials/parameters
    tutorials/mosfit
    tutorials/evolution
+   tutorials/spectra
 
 License & Attribution
 ---------------------

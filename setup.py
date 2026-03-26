@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='slsne',
-    version='0.2.1',
+    version='0.3',
     author='Sebastian Gomez',
     author_email='sgomez@stsci.edu',
     description='Catalog of Type-I Superluminous Supernovae',

@@ -51,3 +51,30 @@ get_references()
 # Print only some references
 get_references(['2018lfe','2015bn'])
 ```
+
+
+
+If you use the processed spectra or related data products in your work, please cite [Aamer et al. 2025](https://ui.adsabs.harvard.edu/abs/2025MNRAS.541.2674A/abstract):
+
+
+```
+@ARTICLE{Aamer2025,
+       author = {{Aamer}, Aysha and {Nicholl}, Matt and {Gomez}, Sebastian and {Berger}, Edo and {Blanchard}, Peter and {Anderson}, Joseph P. and {Angus}, Charlotte and {Aryan}, Amar and {Ashall}, Chris and {Chen}, Ting-Wan and {Dimitriadis}, Georgios and {Galbany}, Llu{\'\i}s and {Gkini}, Anamaria and {Gromadzki}, Mariusz and {Guti{\'e}rrez}, Claudia P. and {Hiramatsu}, Daichi and {Hosseinzadeh}, Griffin and {Inserra}, Cosimo and {Kumar}, Amit and {Kumar}, Harsh and {Kuncarayakti}, Hanindyo and {Leloudas}, Giorgos and {Mazzali}, Paolo and {Medler}, Kyle and {M{\"u}ller-Bravo}, Tom{\'a}s E. and {Ramirez}, Mauricio and {Sankar K}, Aiswarya and {Schulze}, Steve and {Singh}, Avinash and {Sollerman}, Jesper and {Srivastav}, Shubham and {Terwel}, Jacco H. and {Young}, David R.},
+        title = "{The Type I superluminous supernova catalogue {\textendash} II. Spectroscopic evolution in the photospheric phase, velocity measurements, and constraints on diversity}",
+      journal = {\mnras},
+     keywords = {stars: massive, supernovae: general, transients: supernovae, High Energy Astrophysical Phenomena, Astrophysics of Galaxies, Solar and Stellar Astrophysics},
+         year = 2025,
+        month = aug,
+       volume = {541},
+       number = {3},
+        pages = {2674-2706},
+          doi = {10.1093/mnras/staf1113},
+archivePrefix = {arXiv},
+       eprint = {2503.21874},
+ primaryClass = {astro-ph.HE},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2025MNRAS.541.2674A},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+```
+
+We also advise citing the original sources for the spectra used. These can be found in the appendix of Aamer et al. 2025.
